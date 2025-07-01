@@ -1,0 +1,32 @@
+{
+  "name": "hackathon_gitcoffee_backend",
+  "version": "1.0.0",
+  "description": "Servidor backend da equipe GitCoffee para o projeto do hackathon IFC Araquari 2025",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "npx ts-node server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GitCoffee-hackathon2025/hackathon-backend.git"
+  },
+  "keywords": [
+    "IFC",
+    "Araquari",
+    "hackathon",
+    "gitCoffee",
+    "2025"
+  ],
+  "authors": [
+    "Erick Henrique Pedrini de Borba",
+    "Ian Matheus Veiga",
+    "Murilo Jamoski Luciano",
+    "William Chormiak"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GitCoffee-hackathon2025/hackathon-backend/issues"
+  },
+  "homepage": "https://github.com/GitCoffee-hackathon2025/hackathon-backend#readme"
+}
