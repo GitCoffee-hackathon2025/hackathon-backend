@@ -1,6 +1,4 @@
 import { generateKeyPair, exportSPKI, exportPKCS8, exportJWK, type JWK } from 'jose';
-import dotenv from 'dotenv';
-dotenv.config();
 
 type PairKeys = {
   jwt: { public: string; private: string };
@@ -10,7 +8,7 @@ type PairKeys = {
 type NameKeys = keyof PairKeys;
 
 async function generateKeys<T extends NameKeys>(typ: T): Promise<PairKeys[T]> {
-  const typeKeys = process.env[typ == 'crypto' ? 'TYPE_CRYPTO' : 'TYPE_JWT'];
+  const typeKeys = typ == 'crypto' ? 'RSA-OAEP' : 'RS256';
 
   if (!typeKeys) throw new Error('No exists types keys');
 
