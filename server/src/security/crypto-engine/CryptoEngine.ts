@@ -6,7 +6,7 @@ import {
   CompactJWEHeaderParameters,
 } from 'jose';
 
-import KeyManager from './KeyManager';
+import KeyManager from '../../config/keyCrypto/KeyManager';
 import analyzeError from './utils/analyzeError';
 
 class CryptoEngine extends KeyManager {
