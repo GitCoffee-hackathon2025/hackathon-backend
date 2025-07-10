@@ -1,23 +1,24 @@
 import { JOSEAlgNotAllowed, JWEDecryptionFailed, JWEInvalid } from 'jose/dist/types/util/errors';
 import generateKeys from '../config/rsa';
-import { importJWK, exportSPKI, type JWK, CompactEncrypt, compactDecrypt } from 'jose';
+import {
+  importJWK,
+  exportSPKI,
+  type JWK,
+  CompactEncrypt,
+  compactDecrypt,
+  CompactJWEHeaderParameters,
+} from 'jose';
 
 // const locale = 'crypto.ts';
 
 function analyzeError(err: unknown) {
-  if (err instanceof JOSEAlgNotAllowed) 
-    return { msg: 'alg is not allowed', status: false };
+  if (err instanceof JOSEAlgNotAllowed) return 'alg is not allowed';
 
-  if (err instanceof JWEInvalid) 
-    return { msg: 'invalid compact jwe', status: false };
+  if (err instanceof JWEInvalid) return 'invalid compact jwe';
 
-  if (err instanceof TypeError || err instanceof SyntaxError)
-    return { msg: 'invalid encoding', status: false };
+  if (err instanceof TypeError || err instanceof SyntaxError) return 'invalid encoding';
 
-  if (err instanceof JWEDecryptionFailed) 
-    return { msg: 'decryption failed', status: false };
-
-  return true;
+  if (err instanceof JWEDecryptionFailed) return 'decryption failed';
 }
 
 class KeyManager {
@@ -55,6 +56,12 @@ class KeyManager {
   }
 }
 
+interface test {
+  updated: boolean;
+  plaintext: Uint8Array;
+  protectedHeader: CompactJWEHeaderParameters;
+}
+
 class CryptoEngine extends KeyManager {
   private async importKey<K extends keyof typeof KeyManager.keys>(key: K): Promise<CryptoKey> {
     return (await importJWK(KeyManager.keys[key], 'RSA-OAEP')) as CryptoKey;
@@ -69,7 +76,7 @@ class CryptoEngine extends KeyManager {
       const payload = new TextEncoder().encode(JSON.stringify(info));
       return await new CompactEncrypt(payload)
         .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
-        .encrypt(await this.importKey('private'));
+        .encrypt(await this.importKey('public'));
     } catch (err) {
       return false;
     }
@@ -77,18 +84,32 @@ class CryptoEngine extends KeyManager {
 
   public async decode(grossInfo: string) {
     try {
-      const { plaintext, protectedHeader, updated } = await compactDecrypt(
-        grossInfo,
-        KeyManager.keys.private
-      )
-        .then((result) => ({ ...result, updated: true }))
+      const {
+        plaintext,
+        protectedHeader,
+        updated,
+      }: {
+        updated: boolean;
+        plaintext: Uint8Array;
+        protectedHeader: CompactJWEHeaderParameters;
+      } = await compactDecrypt(grossInfo, await this.importKey('private'))
+        .then((info) => ({ ...info, updated: true }))
         .catch(async (err) => {
-          return {
-            ...(await compactDecrypt(grossInfo, KeyManager.keys.old)),
-            updated: false,
-          };
+          const verify = analyzeError(err);
+          if (verify != undefined && verify != 'decryption failed') throw new Error(verify);
+
+          return await compactDecrypt(grossInfo, await this.importKey('old'))
+            .then((info) => ({ ...info, updated: false }))
+            .catch((err) => {
+              throw new Error(analyzeError(err));
+            });
         });
-    } catch (err) {}
+
+        // console.log({ plaintext, protectedHeader, updated });
+
+    } catch (err) {
+      // console.log(err);
+    }
   }
 }
 
