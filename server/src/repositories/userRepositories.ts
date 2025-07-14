@@ -1,5 +1,5 @@
-import { AppDataSource } from "../db/migrations";
-import { UserEntity } from "../models/userModels";
+import { AppDataSource } from "../db/data-source";
+import { UserEntity } from "../entities/userEntities";
 
 
 export class UserRepository{

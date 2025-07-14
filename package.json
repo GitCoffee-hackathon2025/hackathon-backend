@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Servidor backend da equipe GitCoffee para o projeto do hackathon IFC Araquari 2025",
   "main": "server.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "dev": "npx ts-node server.ts"
+    "dev": "npx ts-node /server.ts"
   },
   "repository": {
     "type": "git",

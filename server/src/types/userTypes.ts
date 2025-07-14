@@ -4,6 +4,6 @@ export interface userType{
     senha: string,
     dateBirth: Date,
     cep: string,
-    tel: number,
+    tel: string,
     comentario: string,
 }

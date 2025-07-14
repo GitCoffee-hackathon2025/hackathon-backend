@@ -1,5 +1,5 @@
 import { UserRepository } from "../repositories/userRepositories";
-import { UserEntity } from "../models/userModels";
+import { UserEntity } from "../entities/userEntities";
 
 export class UserService{
     private userRepo: UserRepository;
@@ -12,6 +12,7 @@ export class UserService{
          if (!user || user.senha !== senha) {
         throw new Error("Credenciais inválidas");
         }
+        
         return user; 
     }
     async register(data: Partial<UserEntity>) {

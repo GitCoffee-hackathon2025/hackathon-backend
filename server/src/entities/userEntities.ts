@@ -21,7 +21,7 @@ export class UserEntity{
     cep!: string;
 
     @Column()
-    tel!: number;
+    tel!: string;
 
     @Column({ type: "text" })
     comentario!: string;

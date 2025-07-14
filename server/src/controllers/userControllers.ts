@@ -30,7 +30,11 @@ export async function registerUser(
     const data = request.body;
     const user = await userService.register(data);
     return reply.send({ message: "Usuário registrado com sucesso", user });
-  } catch (error) {
+  } catch (error : any) {
+    if (error.code   === "ER_DUP_ENTRY") {
+      // Código MySQL para entrada duplicada (unique constraint)
+      reply.code(400).send({ error: "Este email já está cadastrado." });
     return reply.status(400).send({ message: error });
   }
+}
 }
