@@ -2,7 +2,7 @@ export interface userType{
     name: string,
     email: string,
     senha: string,
-    dateBirth: string,
+    dateBirth: Date,
     cep: string,
     tel: number,
     comentario: string,

@@ -1,6 +1,7 @@
 // ESM
+import "reflect-metadata";
 import Fastify from 'fastify'
-import { userRouters } from './src/routers/userRouter/router'
+import { userRouters } from './src/routers/router'
 const fastify = Fastify({
   logger: true
 })
