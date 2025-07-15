@@ -1,4 +1,3 @@
-import { text } from "stream/consumers";
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from "typeorm";
 
 @Entity()
@@ -13,7 +12,7 @@ export class UserEntity {
     email!: string;
 
     @Column()
-    senha!: string;
+    password!: string;
 
     @Column()
     dateBirth!: Date;
@@ -24,11 +23,17 @@ export class UserEntity {
     @Column()
     tel!: string;
 
-    @Column({ type: "text" })
-    comentario!: string;
-
-    @OneToMany(() => ReportEntity, report => report.id_user_reports)
+    @OneToMany(() => ReportEntity, report => report.user)
     reports!: ReportEntity[];
+
+    @OneToMany(() => ReviewEntity, review => review.user)
+    reviews!: ReviewEntity[];
+
+    @OneToMany(() => ReportCommentEntity, comment => comment.user)
+    reportComments!: ReportCommentEntity[];
+
+    @OneToMany(() => ReviewCommentEntity, comment => comment.user)
+    reviewComments!: ReviewCommentEntity[];
 }
 
 @Entity()
@@ -38,7 +43,11 @@ export class ReportEntity {
 
     @ManyToOne(() => UserEntity, user => user.reports)
     @JoinColumn({ name: "id_user" })
-    id_user_reports!: UserEntity;
+    user!: UserEntity;
+
+    @ManyToOne(() => TypeReportEntity, type => type.reports)
+    @JoinColumn({ name: "id_type_report" })
+    type!: TypeReportEntity;
 
     @Column()
     id_state!: number;
@@ -48,7 +57,97 @@ export class ReportEntity {
 
     @Column()
     id_neighborhood!: number;
-    
-    @Column({ type: "text"})
-    text_report!: Text;
+
+    @Column({ type: "text" })
+    content_report!: string;
+
+    @OneToMany(() => ReportCommentEntity, comment => comment.report)
+    comments!: ReportCommentEntity[];
+}
+
+@Entity()
+export class ReviewEntity {
+    @PrimaryGeneratedColumn()
+    id_review!: number;
+
+    @ManyToOne(() => UserEntity, user => user.reviews)
+    @JoinColumn({ name: "id_user" })
+    user!: UserEntity;
+
+    @ManyToOne(() => TypeReviewEntity, typeReview => typeReview.reviews)
+    @JoinColumn({ name: "id_type_review" })
+    type!: TypeReviewEntity;
+
+    @Column()
+    id_state!: number;
+
+    @Column()
+    id_city!: number;
+
+    @Column()
+    id_neighborhood!: number;
+
+    @Column({ type: "text" })
+    content_review!: string;
+
+    @OneToMany(() => ReviewCommentEntity, comment => comment.review)
+    comments!: ReviewCommentEntity[];
+}
+
+@Entity()
+export class ReportCommentEntity {
+    @PrimaryGeneratedColumn()
+    id_report_comment!: number;
+
+    @ManyToOne(() => UserEntity, user => user.reportComments)
+    @JoinColumn({ name: "id_user" })
+    user!: UserEntity;
+
+    @ManyToOne(() => ReportEntity, report => report.comments)
+    @JoinColumn({ name: "id_report" })
+    report!: ReportEntity;
+
+    @Column({ type: "text" })
+    content_report_comment!: string;
+}
+
+@Entity()
+export class ReviewCommentEntity {
+    @PrimaryGeneratedColumn()
+    id_review_comment!: number;
+
+    @ManyToOne(() => UserEntity, user => user.reviewComments)
+    @JoinColumn({ name: "id_user" })
+    user!: UserEntity;
+
+    @ManyToOne(() => ReviewEntity, review => review.comments)
+    @JoinColumn({ name: "id_review" })
+    review!: ReviewEntity;
+
+    @Column({ type: "text" })
+    content_review_comment!: string;
+}
+
+@Entity()
+export class TypeReviewEntity {
+    @PrimaryGeneratedColumn()
+    id_type_review!: number;
+
+    @Column({ type: "text" })
+    name_type_review!: string;
+
+    @OneToMany(() => ReviewEntity, review => review.type)
+    reviews!: ReviewEntity[];
+}
+
+@Entity()
+export class TypeReportEntity {
+    @PrimaryGeneratedColumn()
+    id_type_report!: number;
+
+    @Column({ type: "text" })
+    name_type_report!: string;
+
+    @OneToMany(() => ReportEntity, report => report.type)
+    reports!: ReportEntity[];
 }

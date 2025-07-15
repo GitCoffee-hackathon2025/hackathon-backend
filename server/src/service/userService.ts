@@ -9,7 +9,7 @@ export class UserService{
 
     async login(email : string, senha : string) {
         const user = await this.userRepo.findByEmail(email);
-         if (!user || user.senha !== senha) {
+         if (!user || user.password !== senha) { 
         throw new Error("Credenciais inválidas");
         }
         
