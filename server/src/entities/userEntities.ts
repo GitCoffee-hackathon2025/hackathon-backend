@@ -1,6 +1,30 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from "typeorm";
 
 @Entity()
+export class TypeReportEntity {
+    @PrimaryGeneratedColumn()
+    id_type_report!: number;
+
+    @Column({ type: "text" })
+    name_type_report!: string;
+
+    @OneToMany(() => ReportEntity, report => report.type)
+    reports!: ReportEntity[];
+}
+
+@Entity()
+export class TypeReviewEntity {
+    @PrimaryGeneratedColumn()
+    id_type_review!: number;
+
+    @Column({ type: "text" })
+    name_type_review!: string;
+
+    @OneToMany(() => ReviewEntity, review => review.type)
+    reviews!: ReviewEntity[];
+}
+
+@Entity()
 export class UserEntity {
     @PrimaryGeneratedColumn()
     id_user!: number;
@@ -99,6 +123,9 @@ export class ReportCommentEntity {
     @PrimaryGeneratedColumn()
     id_report_comment!: number;
 
+    @Column({ type: "text" })
+    content_report_comment!: string;
+
     @ManyToOne(() => UserEntity, user => user.reportComments)
     @JoinColumn({ name: "id_user" })
     user!: UserEntity;
@@ -106,15 +133,15 @@ export class ReportCommentEntity {
     @ManyToOne(() => ReportEntity, report => report.comments)
     @JoinColumn({ name: "id_report" })
     report!: ReportEntity;
-
-    @Column({ type: "text" })
-    content_report_comment!: string;
 }
 
 @Entity()
 export class ReviewCommentEntity {
     @PrimaryGeneratedColumn()
     id_review_comment!: number;
+
+    @Column({ type: "text" })
+    content_review_comment!: string;
 
     @ManyToOne(() => UserEntity, user => user.reviewComments)
     @JoinColumn({ name: "id_user" })
@@ -123,31 +150,4 @@ export class ReviewCommentEntity {
     @ManyToOne(() => ReviewEntity, review => review.comments)
     @JoinColumn({ name: "id_review" })
     review!: ReviewEntity;
-
-    @Column({ type: "text" })
-    content_review_comment!: string;
-}
-
-@Entity()
-export class TypeReviewEntity {
-    @PrimaryGeneratedColumn()
-    id_type_review!: number;
-
-    @Column({ type: "text" })
-    name_type_review!: string;
-
-    @OneToMany(() => ReviewEntity, review => review.type)
-    reviews!: ReviewEntity[];
-}
-
-@Entity()
-export class TypeReportEntity {
-    @PrimaryGeneratedColumn()
-    id_type_report!: number;
-
-    @Column({ type: "text" })
-    name_type_report!: string;
-
-    @OneToMany(() => ReportEntity, report => report.type)
-    reports!: ReportEntity[];
 }
