@@ -8,6 +8,8 @@ function analyzeError(err: unknown) {
   if (err instanceof TypeError || err instanceof SyntaxError) return 'invalid encoding';
 
   if (err instanceof JWEDecryptionFailed) return 'decryption failed';
+
+  return 'unknown error';
 }
 
 export default analyzeError;

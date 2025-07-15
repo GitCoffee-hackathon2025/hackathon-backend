@@ -1,7 +1,7 @@
 import { generateKeyPair, exportJWK } from 'jose';
-import KeyManagerCrypto from './KeyManager';
+import { constants, setKey } from './KeyManager';
 
-class KeyBootstrapCrypto extends KeyManagerCrypto {
+class KeyBootstrapCrypto {
   private static time = 604800000;
 
   private static _initCalled = false;
@@ -12,19 +12,16 @@ class KeyBootstrapCrypto extends KeyManagerCrypto {
       this._initCalled = true;
 
       const createKeys = async () => {
-        const newPair = await generateKeyPair('RSA-OAEP', {
+        await generateKeyPair(constants.algRSA, {
           modulusLength: 2048,
           extractable: true,
-        }).then(async ({ publicKey, privateKey }) => ({
-          public: await exportJWK(publicKey),
-          private: await exportJWK(privateKey),
-        }));
-
-        if (KeyManagerCrypto.keys.private != KeyManagerCrypto.keys.old)
-          KeyManagerCrypto.keys.old = KeyManagerCrypto.keys.private;
-
-        KeyManagerCrypto.keys.public = newPair.public;
-        KeyManagerCrypto.keys.private = newPair.private;
+        }).then(async ({ publicKey, privateKey }) => {
+          const newKeys = {
+            publicKey: await exportJWK(publicKey),
+            privateKey: await exportJWK(privateKey),
+          };
+          setKey(newKeys);
+        });
 
         setTimeout(async () => await createKeys(), this.time);
       };
