@@ -2,6 +2,10 @@
 import { FastifyRequest, FastifyReply } from "fastify"
 import { UserType} from "../types/userTypes"
 import { UserService } from "../service/userService";
+import { UpdateUserBody } from "../types/userTypes";
+import { UpdateUserParams } from "../types/userTypes";
+import { UserEntity } from "../entities/userEntities";
+
 
 const userService = new UserService();
 
@@ -37,4 +41,28 @@ export async function registerUser(
     return reply.status(400).send({ message: error });
   }
 }
+}
+export async function updateUser(
+    request: FastifyRequest<{
+        Params: UpdateUserParams;
+        Body: Partial<UserEntity>;
+    }>,
+    reply: FastifyReply
+) {
+    try {
+        const { id } = request.params;
+        const updateData = request.body;
+
+        const updatedUser = await userService.update(parseInt(id), updateData);
+        return reply.send({ 
+            success: true,
+            message: "Usuário atualizado com sucesso",
+            data: updatedUser 
+        });
+    } catch (error: any) {
+        return reply.status(400).send({ 
+            success: false,
+            message: error.message || "Erro ao atualizar usuário"
+        });
+    }
 }

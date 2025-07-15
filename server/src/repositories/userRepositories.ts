@@ -1,14 +1,27 @@
+
+import { UserType } from "@fastify/jwt";
 import { AppDataSource } from "../db/data-source";
 import { UserEntity } from "../entities/userEntities";
-
+import { ReviewEntity } from "../entities/userEntities";
 
 export class UserRepository{
-    private repo = AppDataSource.getRepository(UserEntity);
+    private userRepo = AppDataSource.getRepository(UserEntity);
+    private reviewRepo = AppDataSource.getRepository(ReviewEntity);
 
-    findByEmail(email : string) {
-        return this.repo.findOneBy({ email })
+    async findByEmail(email: string): Promise<UserEntity | null> {
+        return this.userRepo.findOneBy({ email });
     }
-    saveUser(user : UserEntity){
-        return this.repo.save(user)
+
+    async updateUser(id : number, userData : Partial<UserEntity>): Promise<UserEntity | null>  {
+        await this.userRepo.update(id, userData);
+        return this.userRepo.findOneBy(userData)
+    }
+
+    async saveUser(user : UserEntity): Promise<UserEntity | null>{
+        return this.userRepo.save(user);
+    }
+
+    async saveReview(review : ReviewEntity): Promise<ReviewEntity | null>{
+        return this.reviewRepo.save(review);
     }
 }

@@ -59,3 +59,16 @@ export interface ReviewType {
   content_review: string;
   comments?: ReviewCommentType[];
 }
+
+export interface UpdateUserBody {
+    name?: string;
+    email?: string;
+    password?: string;
+    cep?: string;
+    tel?: string;
+    dateBirth?: Date;
+}
+
+export interface UpdateUserParams {
+    id: string;
+}
