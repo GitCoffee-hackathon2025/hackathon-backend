@@ -1,20 +1,20 @@
 
 import { FastifyRequest, FastifyReply } from "fastify"
-import {userType} from "../types/userTypes"
+import { UserType} from "../types/userTypes"
 import { UserService } from "../service/userService";
 
 const userService = new UserService();
 
 
 export async function loginUser(
-    request : FastifyRequest<{Body: Pick<userType, "email" | "senha">}>,
+    request : FastifyRequest<{Body: Pick<UserType, "email" | "password">}>,
     reply: FastifyReply
 
 ) {
 ;
   try {  
-    const {email, senha} = request.body
-    const user = await userService.login(email, senha)
+    const {email, password} = request.body
+    const user = await userService.login(email, password)
     return reply.send({message: "logado com sucesso", user})
     
   } catch (error) {
@@ -23,7 +23,7 @@ export async function loginUser(
 }
 
 export async function registerUser(
-    request : FastifyRequest<{Body: Pick<userType, "name" | "email" | "senha" | "cep" | "tel" | "dateBirth"  >}>,
+    request : FastifyRequest<{Body: Pick<UserType, "name" | "email" | "password" | "cep" | "tel" | "dateBirth"  >}>,
     reply: FastifyReply
 ) {
   try {
