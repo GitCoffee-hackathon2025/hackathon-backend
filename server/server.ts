@@ -2,13 +2,13 @@
 import "reflect-metadata";
 import Fastify from 'fastify'
 import { AppDataSource } from "./src/db/data-source";
+import { userRoutersPlugin } from './src/routers/router';
 
-import { userRouters } from './src/routers/router'
 const fastify = Fastify({
   logger: true
 })
+fastify.register(userRoutersPlugin);
 
-fastify.register(userRouters);
 fastify.get('/', function (request, reply) {
   reply.send({ hello: 'world' })
 })

@@ -12,10 +12,11 @@ export class UserRepository{
         return this.userRepo.findOneBy({ email });
     }
 
-    async updateUser(id : number, userData : Partial<UserEntity>): Promise<UserEntity | null>  {
-        await this.userRepo.update(id, userData);
-        return this.userRepo.findOneBy(userData)
-    }
+   async updateUser(id: number, userData: Partial<UserEntity>): Promise<UserEntity | null>  {
+    await this.userRepo.update(id, userData);
+    return this.userRepo.findOneBy({ id_user : id });
+}
+
 
     async saveUser(user : UserEntity): Promise<UserEntity | null>{
         return this.userRepo.save(user);

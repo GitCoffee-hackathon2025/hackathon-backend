@@ -52,8 +52,14 @@ export async function updateUser(
     try {
         const { id } = request.params;
         const updateData = request.body;
-
-        const updatedUser = await userService.update(parseInt(id), updateData);
+        const numericId = parseInt(id)
+         if (isNaN(numericId)) {
+      return reply.status(400).send({
+        success: false,
+        message: "ID inválido",
+      });
+    }
+        const updatedUser = await userService.update(numericId, updateData);
         return reply.send({ 
             success: true,
             message: "Usuário atualizado com sucesso",

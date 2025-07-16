@@ -1,9 +1,15 @@
 import fastify from "fastify";
-import { FastifyInstance } from "fastify";
-import {loginUser, registerUser} from "../controllers/userControllers"
-export async function userRouters(app: FastifyInstance){
-    app.get('/login', loginUser)
-    app.post('/register', registerUser)
+import fp from "fastify-plugin";
+import { FastifyInstance, FastifyPluginOptions} from "fastify";
+import {loginUser, registerUser, updateUser} from "../controllers/userControllers"
+
+
+async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
+  fastify.get('/login', loginUser);
+  fastify.post('/register', registerUser);
+  fastify.put('/update/:id', updateUser);
 }
+
+export const userRoutersPlugin = fp(userRouters);
 
 
