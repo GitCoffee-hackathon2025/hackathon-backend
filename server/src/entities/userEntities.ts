@@ -5,7 +5,7 @@ export class TypeReportEntity {
     @PrimaryGeneratedColumn()
     id_type_report!: number;
 
-    @Column({ type: "text" })
+    @Column({ type: "varchar", length: 100 }) 
     name_type_report!: string;
 
     @OneToMany(() => ReportEntity, report => report.type)
@@ -17,7 +17,7 @@ export class TypeReviewEntity {
     @PrimaryGeneratedColumn()
     id_type_review!: number;
 
-    @Column({ type: "text" })
+    @Column({ type: "varchar", length: 100 })  
     name_type_review!: string;
 
     @OneToMany(() => ReviewEntity, review => review.type)
@@ -29,23 +29,23 @@ export class UserEntity {
     @PrimaryGeneratedColumn()
     id_user!: number;
 
-    @Column()
+    @Column({ type: "varchar", length: 150 })
     name!: string;
 
-    @Column({ unique: true })
+    @Column({ type: "varchar", length: 150, unique: true })
     email!: string;
 
-    @Column()
+    @Column({ type: "varchar", length: 150 })
     password!: string;
 
     @Column()
     dateBirth!: Date;
 
-    @Column()
+    @Column({ type: "varchar", length: 10 })
     cep!: string;
 
-    @Column()
-    tel!: string;
+    @Column({ type: "varchar", length: 20 })
+    tel?: string;
 
     @OneToMany(() => ReportEntity, report => report.user)
     reports!: ReportEntity[];
@@ -54,7 +54,7 @@ export class UserEntity {
     reviews!: ReviewEntity[];
 
     @OneToMany(() => ReportCommentEntity, comment => comment.user)
-    reportComments!: ReportCommentEntity[];
+    reportComments!: ReportCommentEntity[];// nome tipo review até 100 chars
 
     @OneToMany(() => ReviewCommentEntity, comment => comment.user)
     reviewComments!: ReviewCommentEntity[];
@@ -82,7 +82,7 @@ export class ReportEntity {
     @Column()
     id_neighborhood!: number;
 
-    @Column({ type: "text" })
+    @Column({ type: "text" })  
     content_report!: string;
 
     @OneToMany(() => ReportCommentEntity, comment => comment.report)
@@ -111,7 +111,7 @@ export class ReviewEntity {
     @Column()
     id_neighborhood!: number;
 
-    @Column({ type: "text" })
+    @Column({ type: "text" })  
     content_review!: string;
 
     @OneToMany(() => ReviewCommentEntity, comment => comment.review)
@@ -123,7 +123,7 @@ export class ReportCommentEntity {
     @PrimaryGeneratedColumn()
     id_report_comment!: number;
 
-    @Column({ type: "text" })
+    @Column({ type: "text" })  
     content_report_comment!: string;
 
     @ManyToOne(() => UserEntity, user => user.reportComments)
@@ -140,7 +140,7 @@ export class ReviewCommentEntity {
     @PrimaryGeneratedColumn()
     id_review_comment!: number;
 
-    @Column({ type: "text" })
+    @Column({ type: "text" })  
     content_review_comment!: string;
 
     @ManyToOne(() => UserEntity, user => user.reviewComments)
