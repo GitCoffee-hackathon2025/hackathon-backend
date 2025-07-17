@@ -3,16 +3,17 @@ import type uuidType from './uuidType';
 
 export const constants = {
   jwa: {
-    algRSA: 'RSA-OAEP',
-    encAES: 'A256GCM',
-    algAES: 'dir',
+    rsa: { alg: 'RSA-OAEP-256', length: 2048 },
+    aes: { alg: 'dir', enc: 'A256GCM' },
   },
   webcrypto: {
+    // jwa: {
+    //   format: 'jwk',
+    //   hash: 'SHA-256',
+    // },
     aes: {
-      alg: {
-        name: 'AES-GCM',
-        length: 256,
-      },
+      alg: { name: 'AES-GCM', length: 256 },
+      format: 'raw',
       keyUsages: ['encrypt', 'decrypt'],
     },
   },
@@ -41,7 +42,7 @@ export async function getKey(
   name: keyof typeof sensitive
 ): Promise<{ key: CryptoKey; version: string }> {
   const returnedKey = {
-    key: (await importJWK(sensitive[name].key, constants.jwa.algRSA)) as CryptoKey,
+    key: (await importJWK(sensitive[name].key, constants.jwa.rsa.alg)) as CryptoKey,
     version: String(sensitive[name].version),
   };
   return returnedKey;

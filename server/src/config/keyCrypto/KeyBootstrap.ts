@@ -16,8 +16,8 @@ class KeyBootstrapCrypto {
     registerToken(this.token);
 
     const createKeys = async () => {
-      await generateKeyPair(constants.jwa.algRSA, {
-        modulusLength: 2048,
+      await generateKeyPair(constants.jwa.rsa.alg, {
+        modulusLength: constants.jwa.rsa.length,
         extractable: true,
       }).then(async ({ publicKey, privateKey }) => {
         const newKeys = {

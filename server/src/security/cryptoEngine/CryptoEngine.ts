@@ -42,7 +42,7 @@ class CryptoEngine {
           const verify = analyzeError(err);
           if (
             !allowOld &&
-            privateKey.version === '0' &&
+            privateKey.version === '1' &&
             verify != undefined &&
             verify != 'decryption failed'
           )
@@ -60,17 +60,17 @@ class CryptoEngine {
       if ('crit' in aes.protectedHeader || 'typ' in aes.protectedHeader)
         throw new Error('unsupported protected header parameter');
 
-      if (aes.protectedHeader.alg != constants.jwa.algRSA)
+      if (aes.protectedHeader.alg != constants.jwa.rsa.alg)
         throw new Error('arg different from the original');
 
-      if (aes.protectedHeader.enc != constants.jwa.encAES)
+      if (aes.protectedHeader.enc != constants.jwa.aes.enc)
         throw new Error('enc different from the original');
 
       if (aes.protectedHeader.kid != aes.versionUsed) throw new Error('non-coherent key version');
 
       // preparando chave AES
       const aesKey = await crypto.subtle.importKey(
-        'raw',
+        constants.webcrypto.aes.format,
         aes.plaintext,
         constants.webcrypto.aes.alg,
         true,
@@ -151,8 +151,9 @@ class CryptoEngine {
         status: true,
         result: await new CompactEncrypt(bufferPayload)
           .setProtectedHeader({
-            alg: constants.jwa.algAES,
-            enc: constants.jwa.encAES,
+            ...constants.jwa.aes,
+            // alg: constants.jwa.aes.alg,
+            // enc: constants.jwa.aes.enc,
             kid: aes.result.version,
           })
           .encrypt(aes.result.key),
@@ -193,9 +194,9 @@ class CryptoEngine {
       const info = await compactDecrypt(grossInfo, aes.result.key);
 
       // validação do header do payload criptografado
-      if (info.protectedHeader.alg !== constants.jwa.algAES)
+      if (info.protectedHeader.alg !== constants.jwa.aes.alg)
         throw new Error('arg different from the original');
-      if (info.protectedHeader.enc !== constants.jwa.encAES)
+      if (info.protectedHeader.enc !== constants.jwa.aes.enc)
         throw new Error('enc different from the original');
 
       // concluindo conversão
