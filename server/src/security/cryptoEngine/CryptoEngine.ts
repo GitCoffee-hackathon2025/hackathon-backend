@@ -1,9 +1,10 @@
 import {
-  exportSPKI,
   CompactEncrypt,
   compactDecrypt,
   CompactDecryptResult,
   CompactJWEHeaderParameters,
+  exportJWK,
+  JWK,
 } from 'jose';
 
 import { constants, getKey } from '../../config/keyCrypto/KeyManager';
@@ -56,21 +57,27 @@ class CryptoEngine {
         });
 
       // validando header
-      if (aes.protectedHeader.alg != constants.algAES)
+      if ('crit' in aes.protectedHeader || 'typ' in aes.protectedHeader)
+        throw new Error('unsupported protected header parameter');
+
+      if (aes.protectedHeader.alg != constants.jwa.algRSA)
         throw new Error('arg different from the original');
-      if (aes.protectedHeader.enc != constants.encAES)
+
+      if (aes.protectedHeader.enc != constants.jwa.encAES)
         throw new Error('enc different from the original');
+
       if (aes.protectedHeader.kid != aes.versionUsed) throw new Error('non-coherent key version');
 
       // preparando chave AES
       const aesKey = await crypto.subtle.importKey(
         'raw',
         aes.plaintext,
-        { name: constants.encAES },
-        false,
-        ['encrypt', 'decrypt']
+        constants.webcrypto.aes.alg,
+        true,
+        constants.webcrypto.aes.keyUsages
       );
 
+      // retornando chave e versão da chave RSA usada
       return { status: true, result: { key: aesKey, version: aes.versionUsed } };
     } catch (err) {
       return { status: false, result: String(err) };
@@ -79,14 +86,26 @@ class CryptoEngine {
 
   /* ------------------------- */
 
-  public async getPublic() {
+  public async getPublic(): Promise<
+    | {
+        status: true;
+        result: {
+          key: JWK;
+          version: string;
+        };
+      }
+    | {
+        status: false;
+        result: string;
+      }
+  > {
     try {
       // puxando a chave publica e enviando em formato SPKI junto com sua versão
       const key = await getKey('public');
       return {
         status: true,
         result: {
-          key: await exportSPKI(key.key),
+          key: await exportJWK(key.key),
           version: key.version,
         },
       };
@@ -103,7 +122,16 @@ class CryptoEngine {
   public async encode(
     info: Record<string, any>,
     groosAES: { key: string; groos: true } | { key: CryptoKey; version: string; groos: false }
-  ) {
+  ): Promise<
+    | {
+        status: true;
+        result: string;
+      }
+    | {
+        status: false;
+        result: string;
+      }
+  > {
     try {
       // puxando chave privada e descriptando chave AES
       const aes = groosAES.groos
@@ -115,7 +143,7 @@ class CryptoEngine {
               version: groosAES.version,
             },
           };
-      if (aes.status == false) throw new Error(String(aes.result));
+      if (aes.status === false) throw new Error(String(aes.result));
 
       // criptando dado que será enviado
       const bufferPayload = new TextEncoder().encode(JSON.stringify(info));
@@ -123,8 +151,8 @@ class CryptoEngine {
         status: true,
         result: await new CompactEncrypt(bufferPayload)
           .setProtectedHeader({
-            alg: constants.algAES,
-            enc: constants.encAES,
+            alg: constants.jwa.algAES,
+            enc: constants.jwa.encAES,
             kid: aes.result.version,
           })
           .encrypt(aes.result.key),
@@ -139,7 +167,16 @@ class CryptoEngine {
 
   /* ------------------------- */
 
-  public async decode(body: string) {
+  public async decode(body: string): Promise<
+    | {
+        status: true;
+        result: { payload: Record<string, any>; aes: { key: CryptoKey; version: string } };
+      }
+    | {
+        status: false;
+        result: string;
+      }
+  > {
     try {
       // separando chave do dado
       const [grossAES, grossInfo] = body.split(':::');
@@ -150,15 +187,15 @@ class CryptoEngine {
       // descriptando a chave AES do Front com a privada ou a velha
       const aes = await this.resolveSecureAESKey(grossAES, true);
 
-      if (aes.status == false) throw new Error(String(aes.result));
+      if (aes.status === false) throw new Error(String(aes.result));
 
       // descriptando o dado recebido
       const info = await compactDecrypt(grossInfo, aes.result.key);
 
       // validação do header do payload criptografado
-      if (info.protectedHeader.alg !== constants.algAES)
+      if (info.protectedHeader.alg !== constants.jwa.algAES)
         throw new Error('arg different from the original');
-      if (info.protectedHeader.enc !== constants.encAES)
+      if (info.protectedHeader.enc !== constants.jwa.encAES)
         throw new Error('enc different from the original');
 
       // concluindo conversão
@@ -186,3 +223,6 @@ class CryptoEngine {
     }
   }
 }
+
+const cryptoEngine = new CryptoEngine();
+export default cryptoEngine;

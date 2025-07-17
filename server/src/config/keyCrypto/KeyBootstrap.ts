@@ -1,35 +1,36 @@
 import { generateKeyPair, exportJWK } from 'jose';
-import { constants, setKey } from './KeyManager';
+import { constants, registerToken, setKey } from './KeyManager';
+import type uuidType from './uuidType';
 
 class KeyBootstrapCrypto {
-  private static time = 604800000;
+  private static token: uuidType = crypto.randomUUID();
 
-  private static _initCalled = false;
+  private static time: number = 604800000;
 
-  public static async init(): Promise<boolean> {
-    try {
-      if (this._initCalled) throw new Error('not allowed to restart');
-      this._initCalled = true;
+  private static _initCalled: boolean = false;
 
-      const createKeys = async () => {
-        await generateKeyPair(constants.algRSA, {
-          modulusLength: 2048,
-          extractable: true,
-        }).then(async ({ publicKey, privateKey }) => {
-          const newKeys = {
-            publicKey: await exportJWK(publicKey),
-            privateKey: await exportJWK(privateKey),
-          };
-          setKey(newKeys);
-        });
+  public static async init(): Promise<void> {
+    if (this._initCalled) throw new Error('not allowed to restart');
+    this._initCalled = true;
 
-        setTimeout(async () => await createKeys(), this.time);
-      };
-      await createKeys();
-      return true;
-    } catch (err) {
-      return false;
-    }
+    registerToken(this.token);
+
+    const createKeys = async () => {
+      await generateKeyPair(constants.jwa.algRSA, {
+        modulusLength: 2048,
+        extractable: true,
+      }).then(async ({ publicKey, privateKey }) => {
+        const newKeys = {
+          publicKey: await exportJWK(publicKey),
+          privateKey: await exportJWK(privateKey),
+        };
+        setKey(newKeys, this.token);
+      });
+
+      setTimeout(async () => await createKeys(), this.time);
+    };
+    await createKeys();
+    return;
   }
 }
 
