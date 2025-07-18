@@ -1,7 +1,7 @@
-import { generateKeyPair, exportJWK } from 'jose';
-import { constants, registerToken, setKey } from './KeyManager';
+import { registerToken, createKey } from './KeyManager';
 import type uuidType from './uuidType';
 
+// Classe que armazena as informações para rotacionamento de chaves e faz isso
 class KeyBootstrapCrypto {
   private static token: uuidType = crypto.randomUUID();
 
@@ -9,28 +9,17 @@ class KeyBootstrapCrypto {
 
   private static _initCalled: boolean = false;
 
+  // função que inicia o modulo de criptografia
   public static async init(): Promise<void> {
+    // verifica para não repetir
     if (this._initCalled) throw new Error('not allowed to restart');
-    this._initCalled = true;
+    this._initCalled = true; 
 
     registerToken(this.token);
 
-    const createKeys = async () => {
-      await generateKeyPair(constants.jwa.rsa.alg, {
-        modulusLength: constants.jwa.rsa.length,
-        extractable: true,
-      }).then(async ({ publicKey, privateKey }) => {
-        const newKeys = {
-          publicKey: await exportJWK(publicKey),
-          privateKey: await exportJWK(privateKey),
-        };
-        setKey(newKeys, this.token);
-      });
-
-      setTimeout(async () => await createKeys(), this.time);
-    };
-    await createKeys();
-    return;
+    await createKey(this.token);
+    // inicia o rotacionador de fato
+    setTimeout(async () => await createKey(this.token), this.time);
   }
 }
 

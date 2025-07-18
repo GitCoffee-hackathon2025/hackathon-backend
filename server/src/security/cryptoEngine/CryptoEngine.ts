@@ -10,6 +10,8 @@ import {
 import { constants, getKey } from '../../config/keyCrypto/KeyManager';
 import analyzeError from './utils/analyzeError';
 
+// Classe que responsável por descriptografar o body da requisição que o frontend fez e criptografar o dado (object) que o backend respondera.
+
 class CryptoEngine {
   private async resolveSecureAESKey(
     grossAES: string,
@@ -39,15 +41,17 @@ class CryptoEngine {
           versionUsed: privateKey.version,
         }))
         .catch(async (err) => {
+          // verificando a situação (paromêtros, versões) e o erro que ocorreu na descriptografia
           const verify = analyzeError(err);
           if (
             !allowOld &&
             privateKey.version === '1' &&
-            verify != undefined &&
+            verify != 'unknown error' && // retorno que não identificou
             verify != 'decryption failed'
           )
             throw new Error(verify);
 
+          // descriptografando a chave AES, se não funcionar o dado é incompatível
           const oldKey = await getKey('old');
           return await compactDecrypt(grossAES, oldKey.key)
             .then((key) => ({ ...key, versionUsed: oldKey.version }))
@@ -68,7 +72,7 @@ class CryptoEngine {
 
       if (aes.protectedHeader.kid != aes.versionUsed) throw new Error('non-coherent key version');
 
-      // preparando chave AES
+      // importando chave AES
       const aesKey = await crypto.subtle.importKey(
         constants.webcrypto.aes.format,
         aes.plaintext,
@@ -84,8 +88,6 @@ class CryptoEngine {
     }
   }
 
-  /* ------------------------- */
-
   public async getPublic(): Promise<
     | {
         status: true;
@@ -100,7 +102,7 @@ class CryptoEngine {
       }
   > {
     try {
-      // puxando a chave publica e enviando em formato SPKI junto com sua versão
+      // puxando a chave publica e enviando em formato JWK junto com sua versão
       const key = await getKey('public');
       return {
         status: true,
@@ -117,8 +119,6 @@ class CryptoEngine {
     }
   }
 
-  /* ------------------------- */
-
   public async encode(
     info: Record<string, any>,
     groosAES: { key: string; groos: true } | { key: CryptoKey; version: string; groos: false }
@@ -133,7 +133,7 @@ class CryptoEngine {
       }
   > {
     try {
-      // puxando chave privada e descriptando chave AES
+      // descriptando chave AES
       const aes = groosAES.groos
         ? await this.resolveSecureAESKey(groosAES.key)
         : {
@@ -152,8 +152,6 @@ class CryptoEngine {
         result: await new CompactEncrypt(bufferPayload)
           .setProtectedHeader({
             ...constants.jwa.aes,
-            // alg: constants.jwa.aes.alg,
-            // enc: constants.jwa.aes.enc,
             kid: aes.result.version,
           })
           .encrypt(aes.result.key),
@@ -165,8 +163,6 @@ class CryptoEngine {
       };
     }
   }
-
-  /* ------------------------- */
 
   public async decode(body: string): Promise<
     | {
@@ -206,6 +202,7 @@ class CryptoEngine {
       if (typeof payload !== 'object' || payload === null || Array.isArray(payload))
         throw new Error('data in invalid format');
 
+      // retornando o dado recebido do Front junto com a chave AES e a versão do RSA
       return {
         status: true,
         result: {
@@ -225,5 +222,6 @@ class CryptoEngine {
   }
 }
 
+// instanciando a classe e exportando-a
 const cryptoEngine = new CryptoEngine();
 export default cryptoEngine;

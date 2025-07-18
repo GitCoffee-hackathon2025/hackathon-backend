@@ -1,6 +1,9 @@
-import { importJWK, type JWK } from 'jose';
+import { exportJWK, generateKeyPair, importJWK, type JWK } from 'jose';
 import type uuidType from './uuidType';
 
+// Arquivo responsável por armazenar e gerenciar as tipagens e as chaves de criptografia
+
+// exportando as tipagens usadas na criptografia
 export const constants = {
   jwa: {
     rsa: { alg: 'RSA-OAEP-256', length: 2048 },
@@ -19,6 +22,7 @@ export const constants = {
   },
 } as const;
 
+// local que armazena as chaves RSA (NÃO EXPORTAR!)
 const sensitive: {
   public: { key: JWK; version: number };
   private: { key: JWK; version: number };
@@ -38,6 +42,7 @@ const sensitive: {
   },
 };
 
+// retorna somente uma RSA escolhida pelo parametro da função
 export async function getKey(
   name: keyof typeof sensitive
 ): Promise<{ key: CryptoKey; version: string }> {
@@ -48,25 +53,39 @@ export async function getKey(
   return returnedKey;
 }
 
+// primeiro e único token que o código recebeu.
 let internalToken: uuidType | undefined = undefined;
 
+// versão das chaves RSA atuais (simplificação)
 let version = 0;
 
-export function setKey(
-  { publicKey, privateKey }: { publicKey: JWK; privateKey: JWK },
-  token: uuidType
-) {
-  if (!internalToken || internalToken !== token) return;
-
-  if (sensitive.private.version != 0) sensitive.old = sensitive.private;
-
-  version = version + 1;
-
-  sensitive.public = { key: publicKey, version };
-  sensitive.private = { key: privateKey, version };
-}
-
+// registra o primeiro token para poder usar a createKey
 export function registerToken(token: uuidType) {
   if (internalToken !== undefined) throw new Error('token already registered');
   internalToken = token;
+}
+
+// cria um nova par de chaves RSA e as defini 
+export async function createKey(token: uuidType) {
+  // valida token
+  if (!internalToken || internalToken !== token) return;
+
+  // cria o par de chaves
+  const newKeys = await generateKeyPair(constants.jwa.rsa.alg, {
+    modulusLength: constants.jwa.rsa.length,
+    extractable: true,
+  }).then(async ({ publicKey, privateKey }) => ({
+    public: await exportJWK(publicKey),
+    private: await exportJWK(privateKey),
+  }));
+
+  // muda a chave old
+  if (sensitive.private.version != 0) sensitive.old = sensitive.private;
+
+  // soma 1 na versão
+  version = version + 1;
+
+  // defini o novo par de chaves
+  sensitive.public = { key: newKeys.public, version };
+  sensitive.private = { key: newKeys.private, version };
 }

@@ -1,3 +1,5 @@
+// Função responsável por identificar a falha que ocorreu ao tentar resgatar a chave AES do Frontend
+
 function analyzeError(err: Error) {
   const name = err.name;
 
