@@ -9,11 +9,6 @@ const fastify = Fastify({
 })
 fastify.register(userRoutersPlugin);
 
-fastify.get('/', function (request, reply) {
-  reply.send({ hello: 'world' })
-})
-
-
 const start = async () => {
   try {
     await AppDataSource.initialize();
