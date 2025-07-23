@@ -5,7 +5,7 @@ import {loginUser, registerUser, updateUser} from "../controllers/userController
 
 
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
-  fastify.get('/login', loginUser);
+  fastify.post('/login', loginUser);
   fastify.post('/register', registerUser);
   fastify.put('/update/:id', updateUser);
 }

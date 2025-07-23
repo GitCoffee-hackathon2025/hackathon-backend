@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "npx ts-node /server.ts"
+    "dev": "npx ts-node server/server.ts"
   },
   "repository": {
     "type": "git",
