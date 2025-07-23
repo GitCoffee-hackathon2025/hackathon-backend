@@ -1,5 +1,3 @@
-
-import { UserType } from "@fastify/jwt";
 import { AppDataSource } from "../db/data-source";
 import { UserEntity } from "../entities/userEntities";
 import { ReviewEntity } from "../entities/userEntities";
