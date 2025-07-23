@@ -16,8 +16,9 @@ fastify.get('/', function (request, reply) {
 
 const start = async () => {
   try {
-    await fastify.listen({ port: 3000 })
     await AppDataSource.initialize();
+    await fastify.listen({ port: 3000 })
+    
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)
