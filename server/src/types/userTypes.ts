@@ -8,7 +8,13 @@ export interface TypeReviewType {
   id_type_review: number;
   name_type_review: string;
 }
-
+export interface ReportDTO {
+  id_type_report: number; 
+  id_state: number;
+  id_city: number;
+  id_neighborhood: number;
+  content_report: string;
+}
 
 export interface UserType {
   id_user: number;
