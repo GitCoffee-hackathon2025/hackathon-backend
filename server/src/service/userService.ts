@@ -1,6 +1,7 @@
 import { UserRepository } from "../repositories/userRepositories";
 import { UserEntity } from "../entities/userEntities";
-
+import { ReportEntity } from "../entities/userEntities";
+import { ReportDTO } from "../types/userTypes";
 export class UserService{
     private userRepo: UserRepository;
     constructor(){
@@ -29,4 +30,18 @@ export class UserService{
         }
         return user
     }
+
+    async registerReport(id: number, dataReport: ReportDTO) {
+    const user = await this.userRepo.findUserById(id);
+    const typeReportEntity = await this.userRepo.findReportById(id)
+    if (!typeReportEntity) throw new Error("Tipo de relatório não encontrado");
+    if (!user) {
+    throw new Error("Usuário não encontrado");
+    }
+    const report = new ReportEntity();
+    Object.assign(report, dataReport);
+    report.type = typeReportEntity;
+    report.user = user;
+    return this.userRepo.saveReport(report)
+}
 }

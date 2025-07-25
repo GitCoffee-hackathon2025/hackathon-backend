@@ -2,13 +2,26 @@
 import { FastifyRequest, FastifyReply } from "fastify"
 import { UserType} from "../types/userTypes"
 import { UserService } from "../service/userService";
+import { ReportType } from "../types/userTypes";
 import { UpdateUserBody } from "../types/userTypes";
 import { UpdateUserParams } from "../types/userTypes";
-import { UserEntity } from "../entities/userEntities";
-
+import { ReportDTO } from "../types/userTypes";
 
 const userService = new UserService();
 
+export async function registerReport(
+  request: FastifyRequest<{ Params: { id: number }, Body: ReportDTO }>,
+  reply: FastifyReply
+) {
+  try {
+    const dataReport = request.body;
+    const userId = request.params.id;
+    await userService.registerReport(userId, dataReport);
+    return reply.status(201).send();
+  } catch (error) {
+    return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
+  }
+}
 
 export async function loginUser(
     request : FastifyRequest<{Body: Pick<UserType, "email" | "password">}>,
@@ -45,7 +58,7 @@ export async function registerUser(
 export async function updateUser(
     request: FastifyRequest<{
         Params: UpdateUserParams;
-        Body: Partial<UserEntity>;
+        Body: Partial<UpdateUserBody>;
     }>,
     reply: FastifyReply
 ) {
