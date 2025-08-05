@@ -1,5 +1,6 @@
+
 import { AppDataSource } from "../db/data-source";
-import { TypeReportEntity, UserEntity } from "../entities/userEntities";
+import { ReportCommentEntity, ReviewCommentEntity, TypeReportEntity, UserEntity } from "../entities/userEntities";
 import { ReviewEntity } from "../entities/userEntities";
 import { ReportEntity } from "../entities/userEntities";
 import { TypeReviewEntity } from "../entities/userEntities";
@@ -11,7 +12,8 @@ export class UserRepository{
     private reportRepo = AppDataSource.getRepository(ReportEntity);
     private typeReportRepo = AppDataSource.getRepository(TypeReportEntity);
     private typeReviewRepo = AppDataSource.getRepository(TypeReviewEntity);
-
+    private reviewCommentRepo = AppDataSource.getRepository(ReviewCommentEntity)
+    private reportCommentRepo = AppDataSource.getRepository(ReportCommentEntity)
     async findByEmail(email: string): Promise<UserEntity | null> {
         return this.userRepo.findOneBy({ email });
     }
@@ -20,10 +22,10 @@ export class UserRepository{
         return this.userRepo.findOneBy({ id_user: id });
     }
 
-    async findReportById(id : number): Promise<TypeReportEntity | null>{
+    async findTypeReportById(id : number): Promise<TypeReportEntity | null>{
         return this.typeReportRepo.findOneBy({ id_type_report : id  });
     }
-    async findReviewtById(id : number): Promise<TypeReviewEntity | null>{
+    async findTypeReviewById(id : number): Promise<TypeReviewEntity | null>{
         return this.typeReviewRepo.findOneBy({ id_type_review : id  });
     }
     async updateUser(id: number, userData: Partial<UserEntity>): Promise<UserEntity | null>  {
@@ -41,5 +43,21 @@ export class UserRepository{
 
     async saveReview(review : ReviewEntity): Promise<ReviewEntity | null>{
         return this.reviewRepo.save(review);
+    }
+
+    async saveReviewComment(reviewComment : ReviewCommentEntity): Promise<ReviewCommentEntity | null>{
+        return this.reviewCommentRepo.save(reviewComment)
+    }
+
+    async saveReportComment(reportComment : ReportCommentEntity): Promise<ReportCommentEntity | null>{
+        return this.reportCommentRepo.save(reportComment);
+    }
+
+    async findReportById(id : number): Promise<ReportEntity | null>{
+        return this.reportRepo.findOneBy({ id_report : id  });
+    }
+
+      async findReviewById(id : number): Promise<ReviewEntity | null>{
+        return this.reviewRepo.findOneBy({ id_review : id  });
     }
 }

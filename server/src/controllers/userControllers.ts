@@ -7,6 +7,7 @@ import { UpdateUserBody } from "../types/userTypes";
 import { UpdateUserParams } from "../types/userTypes";
 import { ReportDTO } from "../types/userTypes";
 import { ReviewDTO } from "../types/userTypes";
+import { ReportCommentDTO, ReviewCommentDTO } from "../types/userTypes";
 const userService = new UserService();
 
 export async function registerReport(
@@ -22,6 +23,43 @@ export async function registerReport(
     return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
   }
 }
+
+export async function registerReportComment(
+  request: FastifyRequest<{ Params: { reportId: number }, Body: ReportCommentDTO }>,
+  reply: FastifyReply
+) {
+  try {
+    const dataReportComment = request.body;
+    const reportId = request.params.reportId;
+  
+    const userId = request.session.userId
+
+    await userService.registerReportComment(userId, reportId, dataReportComment);
+
+    return reply.status(201).send({ message: "Comentário registrado com sucesso." });
+  } catch (error) {
+    return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
+  }
+}
+
+export async function registerReviewComment(
+  request: FastifyRequest<{ Params: { reportId: number }, Body: ReviewCommentDTO }>,
+  reply: FastifyReply
+) {
+  try {
+    const dataReportComment = request.body;
+    const reportId = request.params.reportId;
+  
+    const userId = request.session.userId
+
+    await userService.registerReportComment(userId, reportId, dataReviewComment);
+
+    return reply.status(201).send({ message: "Comentário registrado com sucesso." });
+  } catch (error) {
+    return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
+  }
+}
+
 
 export async function registerReview(
   request: FastifyRequest<{ Params: { id: number }, Body: ReviewDTO }>,

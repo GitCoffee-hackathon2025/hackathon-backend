@@ -85,3 +85,15 @@ export interface UpdateUserBody {
 export interface UpdateUserParams {
     id: string;
 }
+
+export interface ReportCommentDTO {
+  content_report_comment: string;
+  id_user: number;
+  id_report: number;
+}
+
+export interface ReviewCommentDTO {
+  content_review_comment: string;
+  id_user: number;
+  id_review: number;
+}
