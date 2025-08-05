@@ -7,12 +7,15 @@ import {loginUser, registerReport, registerReview, registerUser, updateUser, reg
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.post('/login', loginUser);
   fastify.post('/register', registerUser);
-  fastify.put('/update/:id', updateUser);
-  fastify.post('/user/:id/registerReport', registerReport)
-  fastify.post('/user/:id/registerReview', registerReview)
+
+  fastify.put('/user/update', updateUser);         
+  fastify.post('/user/registerReport', registerReport);  
+  fastify.post('/user/registerReview', registerReview);  
+
   fastify.post('/reports/:reportId/comments', registerReportComment);
   fastify.post('/reviews/:reportId/comments', registerReviewComment);
 }
+
 
 export const userRoutersPlugin = fp(userRouters);
 
