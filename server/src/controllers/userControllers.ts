@@ -47,12 +47,12 @@ export async function registerReviewComment(
   reply: FastifyReply
 ) {
   try {
-    const dataReportComment = request.body;
+    const dataReviewComment = request.body;
     const reportId = request.params.reportId;
   
     const userId = request.session.userId
 
-    await userService.registerReportComment(userId, reportId, dataReviewComment);
+    await userService.registerReviewComment(userId, reportId, dataReviewComment);
 
     return reply.status(201).send({ message: "Comentário registrado com sucesso." });
   } catch (error) {
@@ -85,6 +85,7 @@ export async function loginUser(
     const { email, password } = request.body
     const user = await userService.login(email, password)
     return reply.send({ message: "logado com sucesso", user })
+
 
   } catch (error) {
     return reply.status(401).send({ message: error });
