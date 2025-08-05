@@ -16,6 +16,13 @@ export interface ReportDTO {
   content_report: string;
 }
 
+export interface ReviewDTO{
+  id_review: number;
+  id_state: number;
+  id_city: number;
+  id_neighborhood: number;
+  content_review: string;
+}
 export interface UserType {
   id_user: number;
   name: string;
