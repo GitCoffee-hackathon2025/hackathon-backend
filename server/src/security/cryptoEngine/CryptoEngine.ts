@@ -75,7 +75,7 @@ class CryptoEngine {
       // importando chave AES
       const aesKey = await crypto.subtle.importKey(
         constants.webcrypto.aes.format,
-        aes.plaintext,
+        new Uint8Array(aes.plaintext), // convertendo por cima, evita erro em algumas máquinas
         constants.webcrypto.aes.alg,
         true,
         constants.webcrypto.aes.keyUsages
