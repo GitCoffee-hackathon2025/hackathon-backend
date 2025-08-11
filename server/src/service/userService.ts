@@ -38,7 +38,7 @@ export class UserService {
 
     async registerReport(id: number, dataReport: ReportDTO) {
         const user = await this.UserRepo.findUserById(id);
-        const typeReportEntity = await this.UserRepo.findTypeReportById(id)
+        const typeReportEntity = await this.UserRepo.findTypeReportById(dataReport.id_type_report)
         if (!typeReportEntity) throw new Error("Tipo de relatório não encontrado");
         if (!user) {
             throw new Error("Usuário não encontrado");
@@ -52,7 +52,7 @@ export class UserService {
 
     async registerReview(id: number, dataReview: ReviewDTO) {
         const user = await this.UserRepo.findUserById(id)
-        const typeReviewEntity = await this.UserRepo.findTypeReviewById(id)
+        const typeReviewEntity = await this.UserRepo.findTypeReviewById(dataReview.id_type_review)
         if (!typeReviewEntity) throw new Error("Tipo de relatório não encontrado");
         if (!user) throw new Error("Usuário não encontrado");
         const review = new ReviewEntity();

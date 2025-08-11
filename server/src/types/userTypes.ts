@@ -17,7 +17,7 @@ export interface ReportDTO {
 }
 
 export interface ReviewDTO{
-  id_review: number;
+  id_type_review: number;
   id_state: number;
   id_city: number;
   id_neighborhood: number;

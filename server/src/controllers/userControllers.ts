@@ -5,6 +5,7 @@ import { UserService } from "../service/userService"
 const userService = new UserService();
 
 function getUserIdFromCookie(request: FastifyRequest, reply: FastifyReply): number | null {
+    console.log("Cookies recebidos:", request.cookies);
   const id = request.cookies.userId;
   if (!id) {
     reply.status(401).send({ message: "Usuário não autenticado" });
@@ -23,8 +24,8 @@ export async function loginUser(
 
     // Criar cookie
     reply.setCookie('userId', user.id_user.toString(), {
-      httpOnly: true,
-      secure: true,
+      httpOnly: false,
+      secure: false,
       sameSite: 'strict',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 dias
