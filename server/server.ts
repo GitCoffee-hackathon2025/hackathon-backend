@@ -3,12 +3,15 @@ import "reflect-metadata";
 import Fastify from 'fastify'
 import { AppDataSource } from "./src/db/data-source";
 import { userRoutersPlugin } from './src/routers/router';
+import fastifyCookie from '@fastify/cookie';
+
 
 const fastify = Fastify({
   logger: true
 })
-fastify.register(userRoutersPlugin);
 
+fastify.register(fastifyCookie);
+fastify.register(userRoutersPlugin);
 const start = async () => {
   try {
     await AppDataSource.initialize();

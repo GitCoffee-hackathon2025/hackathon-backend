@@ -17,7 +17,7 @@ export interface ReportDTO {
 }
 
 export interface ReviewDTO{
-  id_review: number;
+  id_type_review: number;
   id_state: number;
   id_city: number;
   id_neighborhood: number;
@@ -84,4 +84,16 @@ export interface UpdateUserBody {
 
 export interface UpdateUserParams {
     id: string;
+}
+
+export interface ReportCommentDTO {
+  content_report_comment: string;
+  id_user: number;
+  id_report: number;
+}
+
+export interface ReviewCommentDTO {
+  content_review_comment: string;
+  id_user: number;
+  id_review: number;
 }
