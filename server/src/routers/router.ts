@@ -1,29 +1,30 @@
-import fastify from "fastify";
-import fp from "fastify-plugin";
-import { FastifyInstance, FastifyPluginOptions} from "fastify";
-import {loginUser, registerUser, updateUser, } from "../controllers/userControllers"
-import {registerReportComment, registerReviewComment} from "../controllers/commentControllers"
-import {deleteReview, getReview, registerReview} from "../controllers/reviewControllers"
-import {deleteReport, getReport, registerReport} from "../controllers/reportControllers"
+import fp from 'fastify-plugin';
+import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
+import { loginUser, registerUser, updateUser } from '../controllers/userControllers';
+
+import { getReport, registerReport, deleteReport } from '../controllers/reportControllers';
+import { getReview, registerReview, deleteReview } from '../controllers/reviewControllers';
+
+import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
 
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
-  fastify.post('/login', loginUser);
-  fastify.post('/register', registerUser);
+  // Conta do usuário
+  fastify.post('/auth/login', loginUser);
+  fastify.post('/auth/register', registerUser);
+  fastify.put('/auth/update', updateUser);
 
-  fastify.put('/user/update', updateUser);         
-  fastify.post('/user/registerReport', registerReport);  
-  fastify.post('/user/registerReview', registerReview);  
-
+  // métodos para reports
+  fastify.get('/reports', getReport);
+  fastify.post('/reports/register', registerReport);
   fastify.post('/reports/:reportId/comments', registerReportComment);
+  fastify.delete('/reports/:reportId', deleteReport);
+  
+  // métodos para reviews
+  fastify.get('/reviews', getReview);
+  fastify.post('/reviews/register', registerReview);
   fastify.post('/reviews/:reviewId/comments', registerReviewComment);
-
-   
-  fastify.delete('/review/reviewId:', deleteReview);
-    fastify.delete('/reports/:reportId', deleteReport);
+  fastify.delete('/reviews/:reviewId', deleteReview);
 }
 
-
 export const userRoutersPlugin = fp(userRouters);
-
-
