@@ -1,143 +1,69 @@
-import { FastifyRequest, FastifyReply } from "fastify"
-import { UserType, ReportDTO, ReviewDTO, ReportCommentDTO, ReviewCommentDTO, UpdateUserBody, UpdateUserParams } from "../types/userTypes"
-import { UserService } from "../service/userService"
+import { FastifyRequest, FastifyReply } from "fastify";
+import { UserService } from "../service/userService";
+import { UserType, UpdateUserBody, UpdateUserParams } from "../types/userTypes";
 
 const userService = new UserService();
 
-function getUserIdFromCookie(request: FastifyRequest, reply: FastifyReply): number | null {
-    console.log("Cookies recebidos:", request.cookies);
-  const id = request.cookies.userId;
-  if (!id) {
-    reply.status(401).send({ message: "Usuário não autenticado" });
-    return null;
-  }
-  return parseInt(id);
+function getUserIdFromCookie(request: FastifyRequest): number | null {
+    const id = request.cookies.userId;
+    return id ? parseInt(id) : null;
 }
 
 export async function loginUser(
-  request: FastifyRequest<{ Body: Pick<UserType, "email" | "password"> }>,
-  reply: FastifyReply
+    request: FastifyRequest<{ Body: Pick<UserType, "email" | "password"> }>,
+    reply: FastifyReply
 ) {
-  try {
-    const { email, password } = request.body;
-    const user = await userService.login(email, password);
+    try {
+        const { email, password } = request.body;
+        const user = await userService.login(email, password);
 
-    // Criar cookie
-    reply.setCookie('userId', user.id_user.toString(), {
-      httpOnly: false,
-      secure: false,
-      sameSite: 'strict',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
-    });
+        reply.setCookie('userId', user.id_user.toString(), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7 // 7 dias
+        });
 
-    return reply.send({ message: "Logado com sucesso", user });
-  } catch (error) {
-    return reply.status(401).send({ message: "Credenciais inválidas" });
-  }
+        return reply.send({ message: "Logado com sucesso", user });
+    } catch (error) {
+        return reply.status(401).send({ message: "Credenciais inválidas" });
+    }
 }
-
 
 export async function registerUser(
-  request: FastifyRequest<{ Body: Pick<UserType, "name" | "email" | "password" | "cep" | "tel" | "dateBirth"> }>,
-  reply: FastifyReply
+    request: FastifyRequest<{ Body: Pick<UserType, "name" | "email" | "password" | "cep" | "tel" | "dateBirth"> }>,
+    reply: FastifyReply
 ) {
-  try {
-    const data = request.body;
-    const user = await userService.register(data);
-    return reply.send({ message: "Usuário registrado com sucesso", user });
-  } catch (error: any) {
-    if (error.code === "ER_DUP_ENTRY") {
-      return reply.code(400).send({ error: "Este email já está cadastrado." });
+    try {
+        const user = await userService.register(request.body);
+        return reply.status(201).send({ message: "Usuário registrado com sucesso", user });
+    } catch (error: any) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return reply.status(400).send({ error: "Este email já está cadastrado." });
+        }
+        return reply.status(400).send({ message: "Erro ao registrar usuário" });
     }
-    return reply.status(400).send({ message: "Erro ao registrar usuário" });
-  }
 }
-
-
-export async function registerReport(
-  request: FastifyRequest<{ Body: ReportDTO }>,
-  reply: FastifyReply
-) {
-  const userId = getUserIdFromCookie(request, reply);
-  if (userId === null) return;
-
-  try {
-    await userService.registerReport(userId, request.body);
-    return reply.status(201).send();
-  } catch (error) {
-    return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
-  }
-}
-
-export async function registerReview(
-  request: FastifyRequest<{ Body: ReviewDTO }>,
-  reply: FastifyReply
-) {
-  const userId = getUserIdFromCookie(request, reply);
-  if (userId === null) return;
-
-  try {
-    await userService.registerReview(userId, request.body);
-    return reply.status(201).send();
-  } catch (error) {
-    return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
-  }
-}
-
-export async function registerReportComment(
-  request: FastifyRequest<{ Params: { reportId: number }, Body: ReportCommentDTO }>,
-  reply: FastifyReply
-) {
-  const userId = getUserIdFromCookie(request, reply);
-  if (userId === null) return;
-
-  try {
-    const reportId = request.params.reportId;
-    await userService.registerReportComment(userId, reportId, request.body);
-    return reply.status(201).send({ message: "Comentário registrado com sucesso." });
-  } catch (error) {
-    return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
-  }
-}
-
-
-export async function registerReviewComment(
-  request: FastifyRequest<{ Params: { reportId: number }, Body: ReviewCommentDTO }>,
-  reply: FastifyReply
-) {
-  const userId = getUserIdFromCookie(request, reply);
-  if (userId === null) return;
-
-  try {
-    const reportId = request.params.reportId;
-    await userService.registerReviewComment(userId, reportId, request.body);
-    return reply.status(201).send({ message: "Comentário registrado com sucesso." });
-  } catch (error) {
-    return reply.status(400).send({ message: error instanceof Error ? error.message : "Erro desconhecido" });
-  }
-}
-
 
 export async function updateUser(
-  request: FastifyRequest<{ Params: UpdateUserParams; Body: Partial<UpdateUserBody>; }>,
-  reply: FastifyReply
+    request: FastifyRequest<{ Params: UpdateUserParams; Body: Partial<UpdateUserBody> }>,
+    reply: FastifyReply
 ) {
-  const userId = getUserIdFromCookie(request, reply);
-  if (userId === null) return;
+    const userId = getUserIdFromCookie(request);
+    if (!userId) return reply.status(401).send({ message: "Não autorizado" });
 
-  try {
-    const updateData = request.body;
-    const updatedUser = await userService.update(userId, updateData);
-    return reply.send({
-      success: true,
-      message: "Usuário atualizado com sucesso",
-      data: updatedUser
-    });
-  } catch (error: any) {
-    return reply.status(400).send({
-      success: false,
-      message: error.message || "Erro ao atualizar usuário"
-    });
-  }
+    try {
+        const updatedUser = await userService.update(userId, request.body);
+        return reply.send({
+            success: true,
+            message: "Usuário atualizado com sucesso",
+            data: updatedUser
+        });
+    } catch (error: any) {
+        return reply.status(400).send({
+            success: false,
+            message: error.message || "Erro ao atualizar usuário"
+        });
+    }
 }
