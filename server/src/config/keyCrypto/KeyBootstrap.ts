@@ -1,5 +1,5 @@
 import { registerToken, createKey } from './KeyManager';
-import type uuidType from './uuidType';
+import type uuidType from '../../typescript/uuidType';
 
 // Classe que armazena as informações para rotacionamento de chaves e faz isso
 class KeyBootstrapCrypto {

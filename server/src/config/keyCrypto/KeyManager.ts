@@ -1,5 +1,5 @@
 import { exportJWK, generateKeyPair, importJWK, type JWK } from 'jose';
-import type uuidType from './uuidType';
+import type uuidType from '../../typescript/uuidType';
 
 // Arquivo responsável por armazenar e gerenciar as tipagens e as chaves de criptografia
 
