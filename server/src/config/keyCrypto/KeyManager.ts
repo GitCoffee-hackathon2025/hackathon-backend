@@ -4,21 +4,21 @@ import type uuidType from '../../typescript/uuidType';
 // Arquivo responsável por armazenar e gerenciar as tipagens e as chaves de criptografia
 
 // exportando as tipagens usadas na criptografia
-export const constants = {
+export const jwa = {
+  rsa: { alg: 'RSA-OAEP-256', length: 2048 },
+} as const;
+
+export const webcrypto = {
   jwa: {
-    rsa: { alg: 'RSA-OAEP-256', length: 2048 },
-    aes: { alg: 'dir', enc: 'A256GCM' },
+    format: 'jwk',
+    alg: { name: 'RSA-OAEP', hash: { name: 'SHA-256' }, length: 2048 },
+    keyUsages: ['encrypt'],
   },
-  webcrypto: {
-    // jwa: {
-    //   format: 'jwk',
-    //   hash: 'SHA-256',
-    // },
-    aes: {
-      alg: { name: 'AES-GCM', length: 256 },
-      format: 'raw',
-      keyUsages: ['encrypt', 'decrypt'],
-    },
+  aes: {
+    alg: { name: 'AES-GCM', length: 256 },
+    enc: 'A256GCM',
+    format: 'raw',
+    keyUsages: ['encrypt', 'decrypt'],
   },
 } as const;
 
@@ -45,12 +45,11 @@ const sensitive: {
 // retorna somente uma RSA escolhida pelo parametro da função
 export async function getKey(
   name: keyof typeof sensitive
-): Promise<{ key: CryptoKey; version: `${number}v` }> {
-  const returnedKey = {
-    key: (await importJWK(sensitive[name].key, constants.jwa.rsa.alg)) as CryptoKey,
-    version: sensitive[name].version,
+): Promise<{ key: CryptoKey; kid: `${number}v` }> {
+  return {
+    key: (await importJWK(sensitive[name].key, jwa.rsa.alg)) as CryptoKey,
+    kid: sensitive[name].version,
   };
-  return returnedKey;
 }
 
 // primeiro e único token que o código recebeu.
@@ -59,8 +58,8 @@ let internalToken: uuidType | undefined = undefined;
 // versão das chaves RSA atuais (simplificação)
 let version = 0;
 
-export function getVersionKey(): `${number}v` {
-  return `${version}v`;
+export function getVersionKey(): { current: `${number}v`; old: `${number}v` } {
+  return { current: `${version}v`, old: `${version - 1}v` };
 }
 
 // registra o primeiro token para poder usar a createKey
@@ -75,8 +74,8 @@ export async function createKey(token: uuidType) {
   if (!internalToken || internalToken !== token) return;
 
   // cria o par de chaves
-  const newKeys = await generateKeyPair(constants.jwa.rsa.alg, {
-    modulusLength: constants.jwa.rsa.length,
+  const newKeys = await generateKeyPair(jwa.rsa.alg, {
+    modulusLength: jwa.rsa.length,
     extractable: true,
   }).then(async ({ publicKey, privateKey }) => ({
     public: await exportJWK(publicKey),
