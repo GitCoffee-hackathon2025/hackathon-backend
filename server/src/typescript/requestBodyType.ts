@@ -1,6 +1,6 @@
 interface RequestBody {
   header: {
-    rsa: { alg: string; kid: `${number}v`; length: number };
+    rsa: { alg: string; kid: `${number}v` };
     aes: { enc: string };
   };
   ek: ArrayBuffer;
