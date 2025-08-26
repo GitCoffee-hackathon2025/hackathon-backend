@@ -1,4 +1,4 @@
-interface RequestBody {
+export interface RequestBody {
   header: {
     rsa: { alg: string; kid: `${number}v` };
     aes: { enc: string };
@@ -6,6 +6,13 @@ interface RequestBody {
   ek: ArrayBuffer;
   iv: Uint8Array<ArrayBuffer>;
   ct: ArrayBuffer;
+  tag: ArrayBuffer;
 }
 
-export default RequestBody;
+export type DecryptedRequestData = {
+  data: Record<string, any>;
+  browser: {
+    string: string;
+    number: number;
+  } | null;
+};
