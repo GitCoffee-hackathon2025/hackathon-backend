@@ -1,4 +1,5 @@
-import {
+/* 
+  import {
   CompactEncrypt,
   compactDecrypt,
   CompactDecryptResult,
@@ -226,3 +227,4 @@ class CryptoEngine {
 // instanciando a classe e exportando-a
 const cryptoEngine = new CryptoEngine();
 export default cryptoEngine;
+ */
