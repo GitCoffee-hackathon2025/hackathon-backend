@@ -24,31 +24,31 @@ export const constants = {
 
 // local que armazena as chaves RSA (NÃO EXPORTAR!)
 const sensitive: {
-  public: { key: JWK; version: number };
-  private: { key: JWK; version: number };
-  old: { key: JWK; version: number };
+  public: { key: JWK; version: `${number}v` };
+  private: { key: JWK; version: `${number}v` };
+  old: { key: JWK; version: `${number}v` };
 } = {
   public: {
     key: {} as JWK,
-    version: 0,
+    version: '0v',
   },
   private: {
     key: {} as JWK,
-    version: 0,
+    version: '0v',
   },
   old: {
     key: {} as JWK,
-    version: 0,
+    version: '0v',
   },
 };
 
 // retorna somente uma RSA escolhida pelo parametro da função
 export async function getKey(
   name: keyof typeof sensitive
-): Promise<{ key: CryptoKey; version: string }> {
+): Promise<{ key: CryptoKey; version: `${number}v` }> {
   const returnedKey = {
     key: (await importJWK(sensitive[name].key, constants.jwa.rsa.alg)) as CryptoKey,
-    version: String(sensitive[name].version),
+    version: sensitive[name].version,
   };
   return returnedKey;
 }
@@ -59,13 +59,17 @@ let internalToken: uuidType | undefined = undefined;
 // versão das chaves RSA atuais (simplificação)
 let version = 0;
 
+export function getVersionKey(): `${number}v` {
+  return `${version}v`;
+}
+
 // registra o primeiro token para poder usar a createKey
 export function registerToken(token: uuidType) {
   if (internalToken !== undefined) throw new Error('token already registered');
   internalToken = token;
 }
 
-// cria um nova par de chaves RSA e as defini 
+// cria um nova par de chaves RSA e as defini
 export async function createKey(token: uuidType) {
   // valida token
   if (!internalToken || internalToken !== token) return;
@@ -80,12 +84,12 @@ export async function createKey(token: uuidType) {
   }));
 
   // muda a chave old
-  if (sensitive.private.version != 0) sensitive.old = sensitive.private;
+  if (sensitive.private.version !== '0v') sensitive.old = sensitive.private;
 
   // soma 1 na versão
   version = version + 1;
 
   // defini o novo par de chaves
-  sensitive.public = { key: newKeys.public, version };
-  sensitive.private = { key: newKeys.private, version };
+  sensitive.public = { key: newKeys.public, version: `${version}v` };
+  sensitive.private = { key: newKeys.private, version: `${version}v` };
 }
