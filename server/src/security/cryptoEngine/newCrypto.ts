@@ -1,11 +1,9 @@
+import { subtle } from 'crypto';
+
 import { webcrypto, getKey, getVersionKey } from '../../config/keyCrypto/KeyManager';
 import { type RequestBody, type DecryptedRequestData } from '../../typescript/requestBodyType';
 
-const subtle = crypto.subtle;
-
 class CryptoEngine {
-  private aes!: ArrayBuffer;
-
   public static async sendPublicKey(): Promise<{
     key: JsonWebKey;
     kid: `${number}v`;
@@ -13,19 +11,16 @@ class CryptoEngine {
     const key = await getKey('public');
     return {
       // enviando chave privada exportada
-      key: await subtle.exportKey(webcrypto.jwa.format, key.key),
+      key: await subtle.exportKey(webcrypto.rsa.format, key.key),
       kid: key.kid,
     };
   }
 
   private static async importKey(aesExported: ArrayBuffer) {
-    return await subtle.importKey(
-      webcrypto.aes.format,
-      aesExported,
-      webcrypto.aes.alg.name,
-      true,
-      webcrypto.aes.keyUsages
-    );
+    // convertendo a chave para CryptoKey
+    return await subtle.importKey(webcrypto.aes.format, aesExported, webcrypto.aes.alg.name, true, [
+      ...webcrypto.aes.keyUsages,
+    ]);
   }
 
   private static concatArrayBuffer(buf1: ArrayBuffer, buf2: ArrayBuffer): ArrayBuffer {
@@ -40,6 +35,8 @@ class CryptoEngine {
     return tmp.buffer;
   }
 
+  private aes!: ArrayBuffer;
+
   private _init: boolean = false;
 
   public async init(ct: ArrayBuffer, kid: `${number}v`) {
@@ -49,7 +46,7 @@ class CryptoEngine {
     // descriptografando chave AES exportada
     this.aes = await subtle.decrypt(
       // criando uma função autoexecutavel que retorna o name e hash
-      (({ name, hash }) => ({ name, hash }))(webcrypto.jwa.alg),
+      (({ name, hash }) => ({ name, hash }))(webcrypto.rsa.alg),
       // comparando a versão (já verificada) da requisição e puxando a chave dela
       (
         await getKey(kid === getVersionKey().current ? 'private' : 'old')
@@ -63,21 +60,19 @@ class CryptoEngine {
   public async decode(body: Omit<RequestBody, 'header' | 'ct'>): Promise<DecryptedRequestData> {
     if (!this._init) throw new Error('not started key');
 
+    // importando chave AES
     const aes = await CryptoEngine.importKey(this.aes);
 
-    const result = await subtle
+    // descriptando o dado
+    return await subtle
       .decrypt(
         { name: webcrypto.aes.alg.name, iv: body.iv },
         aes,
+        // concatenando o ct com tag
         CryptoEngine.concatArrayBuffer(body.ek, body.tag)
       )
+      // desconvertendo do ArrayBuffer -> JSON -> leitura de código
       .then((result) => JSON.parse(new TextDecoder().decode(result)));
-
-    if (typeof result !== 'object') throw new Error('resulting data invalid');
-
-    if (Object.keys(result).length === 0) throw new Error('no to data');
-
-    return result;
   }
 }
 

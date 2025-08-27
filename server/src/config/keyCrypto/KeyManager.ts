@@ -1,18 +1,15 @@
-import { exportJWK, generateKeyPair, importJWK, type JWK } from 'jose';
+import { subtle } from 'crypto';
+
 import type uuidType from '../../typescript/uuidType';
 
 // Arquivo responsável por armazenar e gerenciar as tipagens e as chaves de criptografia
 
 // exportando as tipagens usadas na criptografia
-export const jwa = {
-  rsa: { alg: 'RSA-OAEP-256', length: 2048 },
-} as const;
-
 export const webcrypto = {
-  jwa: {
+  rsa: {
     format: 'jwk',
     alg: { name: 'RSA-OAEP', hash: { name: 'SHA-256' }, length: 2048 },
-    keyUsages: ['encrypt'],
+    keyUsages: ['encrypt', 'decrypt'],
   },
   aes: {
     alg: { name: 'AES-GCM', length: 256 },
@@ -24,20 +21,20 @@ export const webcrypto = {
 
 // local que armazena as chaves RSA (NÃO EXPORTAR!)
 const sensitive: {
-  public: { key: JWK; version: `${number}v` };
-  private: { key: JWK; version: `${number}v` };
-  old: { key: JWK; version: `${number}v` };
+  public: { key: JsonWebKey; version: `${number}v` };
+  private: { key: JsonWebKey; version: `${number}v` };
+  old: { key: JsonWebKey; version: `${number}v` };
 } = {
   public: {
-    key: {} as JWK,
+    key: {} as JsonWebKey,
     version: '0v',
   },
   private: {
-    key: {} as JWK,
+    key: {} as JsonWebKey,
     version: '0v',
   },
   old: {
-    key: {} as JWK,
+    key: {} as JsonWebKey,
     version: '0v',
   },
 };
@@ -47,7 +44,13 @@ export async function getKey(
   name: keyof typeof sensitive
 ): Promise<{ key: CryptoKey; kid: `${number}v` }> {
   return {
-    key: (await importJWK(sensitive[name].key, jwa.rsa.alg)) as CryptoKey,
+    key: await subtle.importKey(
+      webcrypto.rsa.format,
+      sensitive[name].key,
+      webcrypto.rsa.alg.name,
+      true,
+      name === 'public' ? ['encrypt'] : ['decrypt']
+    ),
     kid: sensitive[name].version,
   };
 }
@@ -74,13 +77,21 @@ export async function createKey(token: uuidType) {
   if (!internalToken || internalToken !== token) return;
 
   // cria o par de chaves
-  const newKeys = await generateKeyPair(jwa.rsa.alg, {
-    modulusLength: jwa.rsa.length,
-    extractable: true,
-  }).then(async ({ publicKey, privateKey }) => ({
-    public: await exportJWK(publicKey),
-    private: await exportJWK(privateKey),
-  }));
+  const keyPair = await crypto.subtle
+    .generateKey(
+      {
+        name: webcrypto.rsa.alg.name,
+        modulusLength: webcrypto.rsa.alg.length,
+        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+        hash: webcrypto.rsa.alg.hash,
+      },
+      true,
+      webcrypto.rsa.keyUsages
+    )
+    .then(async ({ publicKey, privateKey }) => ({
+      public: await subtle.exportKey(webcrypto.rsa.format, publicKey),
+      private: await subtle.exportKey(webcrypto.rsa.format, privateKey),
+    }));
 
   // muda a chave old
   if (sensitive.private.version !== '0v') sensitive.old = sensitive.private;
@@ -89,6 +100,6 @@ export async function createKey(token: uuidType) {
   version = version + 1;
 
   // defini o novo par de chaves
-  sensitive.public = { key: newKeys.public, version: `${version}v` };
-  sensitive.private = { key: newKeys.private, version: `${version}v` };
+  sensitive.public = { key: keyPair.public, version: `${version}v` };
+  sensitive.private = { key: keyPair.private, version: `${version}v` };
 }
