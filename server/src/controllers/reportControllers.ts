@@ -73,3 +73,21 @@ export async function getReport(
         });
     }
 }
+
+export async function getReportByNeighborhood(
+    request: FastifyRequest<{ Params: { NeighborhoodId: number } }>,
+    reply: FastifyReply
+) {
+    try {
+        console.log('ID recebido:', request.params.NeighborhoodId);
+const id = Number(request.params.NeighborhoodId);
+console.log('ID convertido:', id);
+        const report = await reportService.findReportByNeighborhood(Number(request.params.NeighborhoodId));
+        if (!report) return reply.status(404).send({ message: "Relatório não encontrado" });
+        return reply.send(report);
+    } catch (error) {
+        return reply.status(400).send({ 
+            message: error instanceof Error ? error.message : "Erro desconhecido" 
+        });
+    }
+}

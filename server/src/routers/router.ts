@@ -3,7 +3,7 @@ import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 import { loginUser, registerUser, updateUser } from '../controllers/userControllers';
 
-import { getReport, registerReport, deleteReport } from '../controllers/reportControllers';
+import { getReport, registerReport, deleteReport, getReportByNeighborhood } from '../controllers/reportControllers';
 import { getReview, registerReview, deleteReview } from '../controllers/reviewControllers';
 
 import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
@@ -16,6 +16,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
 
   // métodos para reports
   fastify.get('/reports', getReport);
+  fastify.get('/reportsByNeighborhood/:NeighborhoodId', () => console.log("Oi"))
   fastify.post('/reports/register', registerReport);
   fastify.post('/reports/:reportId/comments', registerReportComment);
   fastify.delete('/reports/:reportId', deleteReport);

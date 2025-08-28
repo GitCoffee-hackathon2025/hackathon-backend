@@ -19,12 +19,16 @@ export class ReportRepository {
     async findReportById(id: number): Promise<ReportEntity | null> {
         return this.reportRepo.findOneBy({ id_report: id });
     }
-
-     async deleteReport(id: number): Promise<boolean> {
+       
+    async deleteReport(id: number): Promise<boolean> {
         // Primeiro deleta os comentários associados
         await this.reportCommentRepo.delete({ report: { id_report: id } });
         
         const result: any = await this.reportRepo.delete(id);
         return (result.affected ?? 0) > 0;
+    }
+
+    async findReportByNeighborhood(id : number): Promise<ReportEntity | null>{
+        return this.reportRepo.findOneBy({id_neighborhood : id})
     }
 }

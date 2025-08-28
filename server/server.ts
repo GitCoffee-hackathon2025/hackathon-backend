@@ -4,12 +4,18 @@ import Fastify from 'fastify'
 import { AppDataSource } from "./src/db/data-source";
 import { userRoutersPlugin } from './src/routers/router';
 import fastifyCookie from '@fastify/cookie';
+import fastifyCors from "@fastify/cors";
 
 
 const fastify = Fastify({
   logger: true
 })
-
+fastify.register(fastifyCors, {
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type', 'Authorization'] 
+});
 fastify.register(fastifyCookie);
 fastify.register(userRoutersPlugin);
 const start = async () => {
