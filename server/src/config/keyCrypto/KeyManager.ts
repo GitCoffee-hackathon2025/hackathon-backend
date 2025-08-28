@@ -53,7 +53,7 @@ export function getVersionKey(): { current: KidKey; old: KidKey } {
 }
 
 // cria um nova par de chaves RSA e as defini
-export async function createKey() {
+export async function createRSAKey() {
   // cria o par de chaves
   const keyPair = await subtle
     .generateKey(webcrypto.rsa.alg, true, webcrypto.rsa.keyUsages)

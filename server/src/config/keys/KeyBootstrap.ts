@@ -1,8 +1,9 @@
-import { createKey } from '../keyCrypto/KeyManager';
+import { createRSAKey } from '../keyCrypto/KeyManager';
+import { createJWTKey } from '../KeyTokens/KeyManager';
 
 // Classe que armazena as informações para rotacionamento de chaves e faz isso
 class KeyBootstrapCrypto {
-  private static time: number = 2592000000;
+  private static time: number = 2592000000; // 30 dias
 
   private static _init: boolean = false;
 
@@ -12,9 +13,14 @@ class KeyBootstrapCrypto {
     if (this._init) throw new Error('not allowed to restart');
     this._init = true;
 
-    await createKey();
+    await createRSAKey();
+    await createJWTKey();
     // inicia o rotacionador de fato
-    setTimeout(async () => await createKey(), this.time);
+    setTimeout(async () => {
+      await createRSAKey();
+      await createJWTKey();
+    }, this.time);
+    console.log('security module started');
   }
 }
 

@@ -42,7 +42,7 @@ export function getVersionKey(): { current: KidKey; old: KidKey } {
 }
 
 // cria um nova par de chaves JWT e as defini
-export async function createKey() {
+export async function createJWTKey() {
   // cria o par de chaves
   const keyPair = await subtle
     .generateKey(webcrypto.jwt.alg, true, webcrypto.jwt.keyUsages)
