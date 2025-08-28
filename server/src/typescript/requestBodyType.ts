@@ -12,7 +12,10 @@ export interface RequestBody {
 export type DecryptedRequestData = {
   data: Record<string, any>;
   browser: {
-    string: string;
-    number: number;
+    auth: {
+      string: string;
+      number: number;
+    };
+    connect: ArrayBuffer;
   } | null;
 };
