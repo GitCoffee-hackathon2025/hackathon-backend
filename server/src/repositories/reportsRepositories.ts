@@ -28,7 +28,15 @@ export class ReportRepository {
         return (result.affected ?? 0) > 0;
     }
 
-    async findReportByNeighborhood(id : number): Promise<ReportEntity | null>{
-        return this.reportRepo.findOneBy({id_neighborhood : id})
-    }
+    async findReportsByNeighborhood(id: number, limit: number = 3): Promise<ReportEntity[]> {
+  return this.reportRepo.find({
+    where: { 
+      id_neighborhood: id 
+    },
+    order: { 
+      id_report: 'DESC'  
+    },
+    take: limit
+  })
+}
 }

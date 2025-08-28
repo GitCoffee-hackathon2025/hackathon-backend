@@ -16,7 +16,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
 
   // métodos para reports
   fastify.get('/reports', getReport);
-  fastify.get('/reportsByNeighborhood/:NeighborhoodId', () => console.log("Oi"))
+  fastify.get('/reportsByNeighborhood/:NeighborhoodId', getReportByNeighborhood)
   fastify.post('/reports/register', registerReport);
   fastify.post('/reports/:reportId/comments', registerReportComment);
   fastify.delete('/reports/:reportId', deleteReport);

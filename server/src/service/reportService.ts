@@ -43,7 +43,7 @@ export class ReportService {
         return this.reportRepo.deleteReport(reportId);
     }
     async findReportByNeighborhood(id : number){
-        return this.reportRepo.findReportByNeighborhood(id);
+        return this.reportRepo.findReportsByNeighborhood(id, 3);
     }
     
 

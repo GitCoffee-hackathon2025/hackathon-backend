@@ -74,20 +74,44 @@ export async function getReport(
     }
 }
 
+
 export async function getReportByNeighborhood(
-    request: FastifyRequest<{ Params: { NeighborhoodId: number } }>,
-    reply: FastifyReply
+  request: FastifyRequest<{ Params: { NeighborhoodId: string } }>, 
+  reply: FastifyReply
 ) {
-    try {
-        console.log('ID recebido:', request.params.NeighborhoodId);
-const id = Number(request.params.NeighborhoodId);
-console.log('ID convertido:', id);
-        const report = await reportService.findReportByNeighborhood(Number(request.params.NeighborhoodId));
-        if (!report) return reply.status(404).send({ message: "Relatório não encontrado" });
-        return reply.send(report);
-    } catch (error) {
-        return reply.status(400).send({ 
-            message: error instanceof Error ? error.message : "Erro desconhecido" 
-        });
+  try {
+    console.log('ID recebido:', request.params.NeighborhoodId);
+    
+    const id = Number(request.params.NeighborhoodId);
+    console.log('ID convertido:', id);
+    
+
+    if (isNaN(id)) {
+      return reply.status(400).send({ 
+        message: "ID do bairro deve ser um número válido" 
+      });
     }
+
+    const reports = await reportService.findReportByNeighborhood(id);
+    
+    // Verifica se encontrou reports (array vazio = não encontrou)
+    if (reports.length === 0) {
+      return reply.status(404).send({ 
+        message: "Nenhum relatório encontrado para este bairro",
+        data: []
+      });
+    }
+    
+    return reply.send({
+      success: true,
+      data: reports,
+      count: reports.length
+    });
+    
+  } catch (error) {
+    console.error('Erro ao buscar reports:', error);
+    return reply.status(500).send({ 
+      message: error instanceof Error ? error.message : "Erro interno do servidor" 
+    });
+  }
 }
