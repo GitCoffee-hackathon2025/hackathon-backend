@@ -1,4 +1,5 @@
-import { webcrypto, getVersionKey } from '../config/keyCrypto/KeyManager';
+import webcrypto from '../config/keys/crypto.config';
+import { getVersionKey } from '../config/keyCrypto/KeyManager';
 import { type RequestBody } from '../typescript/requestBodyType';
 
 function validateHeaderBody(header: RequestBody['header']): true | [false, string] {

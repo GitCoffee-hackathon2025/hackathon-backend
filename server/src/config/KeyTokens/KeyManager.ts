@@ -31,9 +31,15 @@ const sensitive: {
 };
 
 let jwt: FastifyInstance['jwt'];
+let salt: { current: Uint16Array<ArrayBuffer>; old: Uint16Array<ArrayBuffer> };
 
+// sempre puxe a variavel e não armazene dentro do código
 export function usesJwtInstance(): FastifyInstance['jwt'] {
   return jwt;
+}
+
+export function usesSaltToken() {
+  return { ...salt };
 }
 
 // funçãoq que incrementa a versão em 1
@@ -73,5 +79,12 @@ export async function createJWTKey(fastify: FastifyInstance) {
     ...sensitive,
     kid: sensitive.currentKid.private.kid,
   });
+
+  // declarando os novos valores
+  salt = {
+    old: salt.current,
+    current: crypto.getRandomValues(new Uint16Array(5)),
+  };
+
   jwt = fastify.jwt;
 }

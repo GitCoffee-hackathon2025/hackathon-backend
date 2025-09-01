@@ -1,6 +1,9 @@
 import { subtle } from 'crypto';
+import webcrypto from '../../config/keys/crypto.config';
+import { getKey, getVersionKey } from '../../config/keyCrypto/KeyManager';
 
-import { webcrypto, getKey, getVersionKey } from '../../config/keyCrypto/KeyManager';
+import concatArrayBuffer from '../utils/concatArrayBuffer';
+
 import { type RequestBody, type DecryptedRequestData } from '../../typescript/requestBodyType';
 
 class CryptoEngine {
@@ -16,30 +19,18 @@ class CryptoEngine {
     };
   }
 
-  private static async importKey(aesExported: ArrayBuffer) {
+  private static async importKey(aesExported: ArrayBuffer): Promise<CryptoKey> {
     // convertendo a chave para CryptoKey
     return await subtle.importKey(webcrypto.aes.format, aesExported, webcrypto.aes.alg.name, true, [
       ...webcrypto.aes.keyUsages,
     ]);
   }
 
-  private static concatArrayBuffer(buf1: ArrayBuffer, buf2: ArrayBuffer): ArrayBuffer {
-    // cria um buffer temporario do tamanho da soma
-    const tmp = new Uint8Array(buf1.byteLength + buf2.byteLength);
-
-    // pega os valores dos buffers e os coloca nas posições
-    tmp.set(new Uint8Array(buf1), 0);
-    tmp.set(new Uint8Array(buf2), buf1.byteLength);
-
-    // retorna o buffer resultante
-    return tmp.buffer;
-  }
-
   private aes!: ArrayBuffer;
 
   private _init: boolean = false;
 
-  public async init(ct: ArrayBuffer, kid: `${number}v`) {
+  public async init(ct: ArrayBuffer, kid: `${number}v`): Promise<boolean> {
     if (this._init) return false;
     this._init = true;
 
@@ -69,7 +60,7 @@ class CryptoEngine {
         { name: webcrypto.aes.alg.name, iv: body.iv },
         aes,
         // concatenando o ct com tag
-        CryptoEngine.concatArrayBuffer(body.ek, body.tag)
+        concatArrayBuffer(body.ek, body.tag)
       )
       // desconvertendo do ArrayBuffer -> JSON -> leitura de código
       .then((result) => JSON.parse(new TextDecoder().decode(result)));

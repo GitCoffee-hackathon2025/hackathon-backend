@@ -1,17 +1,26 @@
-import { type FastifyInstance } from 'fastify';
-import jsonwebtoken from '@fastify/jwt';
+import webcrypto from '../../config/keys/crypto.config';
+import { usesJwtInstance, usesSaltToken } from '../../config/KeyTokens/KeyManager';
+
+import concatArrayBuffer from '../utils/concatArrayBuffer';
+
+import { type RequestBody, type DecryptedRequestData } from '../../typescript/requestBodyType';
+
+type ID = `${number}`;
 
 class TokenHandler {
-  private jwt!: FastifyInstance['jwt'];
+  private static async hash(payload: ArrayBuffer, useOld: boolean = false) {
+    return await crypto.subtle.digest(
+      webcrypto.jwt.alg.hash.name,
+      concatArrayBuffer(payload, usesSaltToken()[!useOld ? 'current' : 'old'])
+    );
+  }
 
-  private _init: boolean = false;
+  public static async issueTokens(id: ID, browser: DecryptedRequestData['browser']) {
+    if (!browser) throw new Error('invalid browser data');
 
-  public async init(register: FastifyInstance['register']) {
-    if (this._init) return false;
-    this._init = true;
+    const auth = await this.hash(new TextEncoder().encode(JSON.stringify(browser.auth)));
+    const connect = await this.hash(browser.connect);
 
-    
-
-    return true;
+    const token = usesJwtInstance().sign({ id, bh: auth, akid: connect }, {  });
   }
 }
