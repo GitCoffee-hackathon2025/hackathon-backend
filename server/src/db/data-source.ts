@@ -1,5 +1,5 @@
 import { DataSource } from "typeorm";
-import { UserEntity, ReportEntity, ReviewEntity, TypeReportEntity, TypeReviewEntity, ReportCommentEntity, ReviewCommentEntity } from "../entities/userEntities"; // Ajuste o caminho conforme necessário
+import { UserEntity, ReportEntity, ReviewEntity, TypeReportEntity, TypeReviewEntity, ReportCommentEntity, ReviewCommentEntity, TokenEntity, VerificationTokenEntity } from "../entities/userEntities"; // Ajuste o caminho conforme necessário
 import 'dotenv/config';
 
 /* ============================
@@ -23,7 +23,10 @@ export const AppDataSource = new DataSource({
         TypeReportEntity,
         TypeReviewEntity,
         ReportCommentEntity,
-        ReviewCommentEntity
+        ReviewCommentEntity,
+        TokenEntity,
+        VerificationTokenEntity
+
     ],
     migrations: [], 
     subscribers: [],
