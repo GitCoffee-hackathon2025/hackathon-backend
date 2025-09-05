@@ -1,7 +1,7 @@
 import { AppDataSource } from '../db/data-source';
 import { VerificationTokenEntity } from '../entities/userEntities';
 
-export class EmailRepository {
+export class TokenRepository {
   private verificationTokenRepo = AppDataSource.getRepository(VerificationTokenEntity);
 
   async saveVerificationToken(token: VerificationTokenEntity): Promise<void> {

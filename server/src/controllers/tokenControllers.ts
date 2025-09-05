@@ -2,15 +2,17 @@ import 'dotenv/config';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { EmailService } from '../service/emailService';
+import { TokenService } from '../service/tokenService';
 import { UserService } from '../service/userService';
 import { transporter } from '../email/transporter';
 import { sendEmailorVerifyCode } from '../types/userTypes';
+import { CryptoUtil } from '../utils/crypto';
 
-const emailService = new EmailService();
+const tokenService = new TokenService();
 const userService = new UserService();
-const sault_round = 12;
 const defaultError = 'Erro interno ao processar a solicitação. Tente novamente mais tarde.';
+
+
 export async function sendVerificationToken(
   request: FastifyRequest<{ Body: sendEmailorVerifyCode }>,
   reply: FastifyReply
@@ -44,9 +46,8 @@ export async function sendVerificationToken(
   const now = new Date();
 
   try {
-    const userAlredyExist = await userService.findUser(request.body.email, true);
-    console.log(userAlredyExist)
-    if (userAlredyExist) {
+    const userAlredyExist = await userService.findUser(request.body.email);
+    if (userAlredyExist && type == 'EMAIL_VERIFICATION') {
       return reply.status(409).send({
         success: false,
         message: 'Email fornecido pelo usuário ja está em uso',
@@ -54,7 +55,7 @@ export async function sendVerificationToken(
       });
     }
 
-    const tokenExisting = await emailService.verify(email, type);
+    const tokenExisting = await tokenService.verify(email, type);
 
     if (tokenExisting) {
       const elapsedMs = now.getTime() - new Date(tokenExisting.createdAt).getTime();
@@ -67,12 +68,12 @@ export async function sendVerificationToken(
       }
     }
 
-    await emailService.delete(email);
+    await tokenService.delete(email);
 
-    const tokenHash = await bcrypt.hash(tokenCode, sault_round);
+    const tokenHash = await CryptoUtil.hashPassword(tokenCode);
     const expiresAt = new Date(now.getTime() + EXPIRES_MINUTES * 60 * 1000);
 
-    await emailService.register({
+    await tokenService.register({
       emailUser: email,
       tokenHash,
       tokenType: type,
@@ -99,7 +100,7 @@ export async function sendVerificationToken(
   } catch (err: any) {
     return reply.code(500).send({
       success: false,
-      message: err.message,
+      message: err.message ?? defaultError,
       error: defaultError,
     });
   }
@@ -134,7 +135,7 @@ export async function verifyToken(
   }
 
   try {
-    const tokenExisting = await emailService.verify(email, type);
+    const tokenExisting = await tokenService.verify(email, type);
 
     if (!tokenExisting) {
       return reply.code(400).send({
@@ -162,7 +163,7 @@ export async function verifyToken(
       });
     }
 
-    const isMatch = await bcrypt.compare(String(code), tokenExisting.tokenHash);
+    const isMatch = await CryptoUtil.comparePassword(String(code), tokenExisting.tokenHash);
 
     if (!isMatch) {
       return reply.code(400).send({
@@ -171,7 +172,7 @@ export async function verifyToken(
         error: 'Código inválido ou não solicitado.',
       });
     }
-    await emailService.update(email, type);
+    await tokenService.update(email, type);
 
     return reply.code(200).send({
       success: true,
@@ -181,7 +182,7 @@ export async function verifyToken(
   } catch (err: any) {
     return reply.code(500).send({
       success: false,
-      message: err.message,
+      message: err.message ?? defaultError,
       error: defaultError,
     });
   }
