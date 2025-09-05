@@ -1,5 +1,7 @@
 import { UserRepository } from '../repositories/userRepositories';
 import { UserEntity } from '../entities/userEntities';
+import { UpdateType, UserType } from '../types/userTypes';
+import { CryptoUtil } from '../utils/crypto';
 
 export class UserService {
   private userRepo: UserRepository;
@@ -9,47 +11,68 @@ export class UserService {
   }
 
   async login(email: string, password: string) {
-    const user = await this.userRepo.findByEmail(email);
-    if (!user || user.password !== password) {
-      throw new Error('Credenciais inválidas');
+    try {
+      const user = await this.userRepo.findByEmail(email);
+      let comparedPassword: boolean = false;
+
+      if (user) {
+        comparedPassword = await CryptoUtil.comparePassword(password, user.password);
+      }
+
+      return { user, comparedPassword };
+    } catch (error) {
+      throw error;
     }
-    return user;
   }
 
-  async register(data: Partial<UserEntity>) {
-    const user = new UserEntity();
-    Object.assign(user, data);
-    return this.userRepo.save(user);
+  async register(data: Partial<UserType>) {
+    try {
+      const user = new UserEntity();
+      Object.assign(user, data);
+
+      if (user.password) {
+        user.password = await CryptoUtil.hashPassword(user.password);
+      }
+
+      await this.userRepo.save(user);
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async update(id: number, dataUser: Partial<UserEntity>) {
-    const user = await this.userRepo.update(id, dataUser);
-    if (!user) {
-      throw new Error('Algo deu errado');
+  async update(id: number, dataUser: Partial<UserEntity>, type: UpdateType) {
+    try {
+      if (type == 'PASSWORD' && dataUser.password) {
+        dataUser.password = await CryptoUtil.hashPassword(dataUser.password);
+      }
+      await this.userRepo.update(id, dataUser);
+
+      const updatedUser = await this.findById(id);
+
+      return updatedUser;
+    } catch (error) {
+      throw error;
     }
-    return user;
   }
 
   async findById(id: number) {
-    return this.userRepo.findById(id);
-  }
-
-  async findUser(email: string, noReturnValue?: true): Promise<UserEntity | null> {
     try {
-      const user = await this.userRepo.findByEmail(email);
-
-      console.log(user)
-      if (noReturnValue) {
-        return user 
-      } 
-
-      if (!user) {
-        throw new Error('Usuário não encontrado');
-      }
+      const user = await this.userRepo.findById(id);
 
       return user;
     } catch (error) {
-      throw error; 
+      throw error;
+    }
+  }
+
+  async findUser(email: string) {
+    try {
+      const user = await this.userRepo.findByEmail(email);
+
+      return user;
+    } catch (error) {
+      throw error;
     }
   }
 }

@@ -44,9 +44,6 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 10 })
   cep!: string;
 
-  @Column({ type: 'varchar', length: 20 })
-  tel?: string;
-
   @OneToMany(() => ReportEntity, (report) => report.user)
   reports!: ReportEntity[];
 

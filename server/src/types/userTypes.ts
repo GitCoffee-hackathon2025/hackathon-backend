@@ -94,6 +94,8 @@ export interface UpdateUserBody {
   dateBirth?: Date;
 }
 
+export type UpdateType = 'PASSWORD' | 'CEP' | 'EMAIL' | 'NAME' | 'DATE';
+
 export interface UpdateUserParams {
   id: string;
 }
