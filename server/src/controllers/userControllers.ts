@@ -94,6 +94,7 @@ export async function registerUser(
     }
 
     await userService.register(request.body);
+    await tokenService.delete(user.email, type);
     return reply.status(201).send({ success: true, message: 'Usuário registrado com sucesso' });
   } catch (err: any) {
     return reply
@@ -109,8 +110,8 @@ export async function updateUser(
   }>,
   reply: FastifyReply
 ) {
-  const type = 'PASSWORD_RESET';
   const updateType = request.body.type;
+  const type = updateType == 'PASSWORD' ? 'PASSWORD_RESET' : 'CHANGE_EMAIL';
   const userId = getUserIdFromCookie(request);
 
   if (
@@ -120,15 +121,19 @@ export async function updateUser(
     updateType != 'DATE' &&
     updateType != 'EMAIL'
   ) {
-    return reply
-      .status(401)
-      .send({ succes: false, message: 'Tipo de atualização de usuário inválido', error: 'Sem autorização para atualizar.' });
+    return reply.status(401).send({
+      succes: false,
+      message: 'Tipo de atualização de usuário inválido',
+      error: 'Sem autorização para atualizar.',
+    });
   }
 
   if (!userId)
-    return reply
-      .status(401)
-      .send({ succes: false, message: 'Não autorizado pelo id', error: 'Sem autorização para atualizar.' });
+    return reply.status(401).send({
+      succes: false,
+      message: 'Não autorizado pelo id',
+      error: 'Sem autorização para atualizar.',
+    });
 
   try {
     const email = (await userService.findById(userId))?.email;
@@ -141,7 +146,15 @@ export async function updateUser(
       });
     }
 
-    if (updateType == 'PASSWORD') {
+    if (updateType == 'PASSWORD' || updateType == 'EMAIL') {
+      if (email == request.body.user.email) {
+        return reply.status(400).send({
+          success: false,
+          message: 'Email fornecido pelo usuário já está em uso',
+          error: 'Esta email já esta em uso.',
+        });
+      }
+
       const tokenExisting = await tokenService.verify(email, type);
 
       if (!tokenExisting) {
@@ -161,6 +174,8 @@ export async function updateUser(
     }
 
     const updatedUser = await userService.update(userId, request.body.user, updateType);
+    if (updateType == 'PASSWORD' || updateType == 'EMAIL') await tokenService.delete(email, type);
+
     return reply.status(200).send({
       success: true,
       message: 'Usuário atualizado com sucesso',

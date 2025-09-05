@@ -29,7 +29,7 @@ export async function sendVerificationToken(
     });
   }
 
-  if (type !== 'EMAIL_VERIFICATION' && type !== 'PASSWORD_RESET') {
+  if (type !== 'EMAIL_VERIFICATION' && type !== 'PASSWORD_RESET' && type !== 'CHANGE_EMAIL') {
     return reply.code(400).send({
       success: false,
       message: 'Tipo de token inválido',
@@ -68,7 +68,7 @@ export async function sendVerificationToken(
       }
     }
 
-    await tokenService.delete(email);
+    await tokenService.delete(email, type);
 
     const tokenHash = await CryptoUtil.hashPassword(tokenCode);
     const expiresAt = new Date(now.getTime() + EXPIRES_MINUTES * 60 * 1000);
@@ -84,7 +84,7 @@ export async function sendVerificationToken(
       await transporter.sendMail({
         from: `"Hackathon" <${process.env.EMAIL}>`,
         to: email,
-        subject: type === 'EMAIL_VERIFICATION' ? 'Verificação de e-mail' : 'Recuperação de senha',
+        subject: type === 'EMAIL_VERIFICATION' ? 'Verificação de e-mail' : type ==='PASSWORD_RESET'? 'Recuperação de senha' : 'Mudança de email',
         text: `Seu código é: ${tokenCode}`,
         html: `<p>Seu código é: <b>${tokenCode}</b></p>`,
       });
@@ -120,7 +120,7 @@ export async function verifyToken(
     });
   }
 
-  if (type !== 'EMAIL_VERIFICATION' && type !== 'PASSWORD_RESET') {
+  if (type !== 'EMAIL_VERIFICATION' && type !== 'PASSWORD_RESET' && type !== 'CHANGE_EMAIL') {
     return reply
       .code(400)
       .send({ success: false, message: 'Tipo de token inválido.', error: defaultError });

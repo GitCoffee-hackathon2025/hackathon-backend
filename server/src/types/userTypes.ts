@@ -7,7 +7,7 @@ export interface verificationCode {
 
 export interface sendEmailorVerifyCode {
   email: string;
-  type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+  type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'CHANGE_EMAIL';
   code?: number;
 }
 

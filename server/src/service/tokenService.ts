@@ -29,9 +29,9 @@ export class TokenService {
     }
   }
 
-  async delete(email: string) {
+  async delete(email: string, type: string) {
     try {
-      await this.emailRepo.deleteToken(email);
+      await this.emailRepo.deleteToken(email, type);
     } catch (error) {
       throw error;
     }
