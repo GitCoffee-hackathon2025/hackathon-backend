@@ -1,11 +1,11 @@
-import { EmailRepository } from '../repositories/emailRepositories';
+import { TokenRepository} from '../repositories/tokenRepositories';
 import { VerificationTokenEntity } from '../entities/userEntities';
 
-export class EmailService {
-  private emailRepo: EmailRepository;
+export class TokenService {
+  private emailRepo: TokenRepository;
 
   constructor() {
-    this.emailRepo = new EmailRepository();
+    this.emailRepo = new TokenRepository();
   }
 
   async verify(email: string, type: string) {
@@ -29,9 +29,9 @@ export class EmailService {
     }
   }
 
-  async delete(email: string) {
+  async delete(email: string, type: string) {
     try {
-      await this.emailRepo.deleteToken(email);
+      await this.emailRepo.deleteToken(email, type);
     } catch (error) {
       throw error;
     }
@@ -44,11 +44,4 @@ export class EmailService {
       throw error;
     }
   }
-}
-
-export interface verificationCode {
-  email_user: string;
-  token_hash: string;
-  token_tyoe: string;
-  expires_at: Date;
 }

@@ -1,7 +1,7 @@
 import { AppDataSource } from '../db/data-source';
 import { VerificationTokenEntity } from '../entities/userEntities';
 
-export class EmailRepository {
+export class TokenRepository {
   private verificationTokenRepo = AppDataSource.getRepository(VerificationTokenEntity);
 
   async saveVerificationToken(token: VerificationTokenEntity): Promise<void> {
@@ -28,9 +28,9 @@ export class EmailRepository {
     }
   }
 
-  async deleteToken(email: string): Promise<void> {
+  async deleteToken(email: string, type: string): Promise<void> {
     try {
-      await this.verificationTokenRepo.delete({ emailUser: email });
+      await this.verificationTokenRepo.delete({ emailUser: email,tokenType: type });
     } catch (error) {
       throw new Error(`Erro ao excluir token do usuário ${email}: ${String(error)}`);
     }

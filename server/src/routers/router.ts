@@ -13,7 +13,7 @@ import { getReview, registerReview, deleteReview } from '../controllers/reviewCo
 
 import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
 
-import { sendVerificationToken,  verifyToken } from '../controllers/emailControllers';
+import { sendVerificationToken,  verifyToken } from '../controllers/tokenControllers';
 
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
   // Conta do usuário

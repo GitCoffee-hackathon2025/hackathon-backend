@@ -7,7 +7,7 @@ export interface verificationCode {
 
 export interface sendEmailorVerifyCode {
   email: string;
-  type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+  type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'CHANGE_EMAIL';
   code?: number;
 }
 
@@ -93,6 +93,8 @@ export interface UpdateUserBody {
   tel?: string;
   dateBirth?: Date;
 }
+
+export type UpdateType = 'PASSWORD' | 'CEP' | 'EMAIL' | 'NAME' | 'DATE';
 
 export interface UpdateUserParams {
   id: string;
