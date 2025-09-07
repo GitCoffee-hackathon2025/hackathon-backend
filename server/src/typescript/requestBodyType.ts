@@ -1,6 +1,8 @@
+export type Kid = `${number}v`;
+
 export interface RequestBody {
   header: {
-    rsa: { alg: string; kid: `${number}v` };
+    rsa: { alg: string; kid: Kid };
     aes: { enc: string };
   };
   ek: ArrayBuffer;
@@ -9,7 +11,7 @@ export interface RequestBody {
   tag: ArrayBuffer;
 }
 
-export type DecryptedRequestData = {
+export interface DecryptedRequestData {
   data: Record<string, any>;
   browser: {
     auth: {
@@ -18,4 +20,4 @@ export type DecryptedRequestData = {
     };
     connect: ArrayBuffer;
   } | null;
-};
+}

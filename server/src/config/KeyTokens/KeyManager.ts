@@ -1,37 +1,43 @@
+// Tipagens
 import { type FastifyInstance } from 'fastify';
-import fastifyJwt from '@fastify/jwt';
+import { type Kid } from '../../typescript/requestBodyType';
 
+// Configurações
 import webcrypto from '../keys/crypto.config';
 
-const subtle = crypto.subtle;
-
-// Arquivo responsável por armazenar e gerenciar as tipagens e as chaves de criptografia
-
-type KidKey = `${number}v`;
+// Plugins
+import fastifyJwt from '@fastify/jwt';
 
 // local que armazena as chaves JWT (NÃO EXPORTAR!)
 const sensitive: {
-  currentKid: {
-    public: { key: JsonWebKey; kid: KidKey };
-    private: { key: JsonWebKey; kid: KidKey };
+  current: {
+    public: string;
+    private: string;
+    kid: Kid;
   };
-  oldKid: {
-    public: { key: JsonWebKey; kid: KidKey };
-    private: { key: JsonWebKey; kid: KidKey };
+  old: {
+    public: string;
+    private: string;
+    kid: Kid;
   };
 } = {
-  currentKid: {
-    public: { key: {} as JsonWebKey, kid: '0v' },
-    private: { key: {} as JsonWebKey, kid: '0v' },
+  current: {
+    public: {} as string,
+    private: {} as string,
+    kid: '0v',
   },
-  oldKid: {
-    public: { key: {} as JsonWebKey, kid: '0v' },
-    private: { key: {} as JsonWebKey, kid: '0v' },
+  old: {
+    public: {} as string,
+    private: {} as string,
+    kid: '0v',
   },
 };
 
 let jwt: FastifyInstance['jwt'];
-let salt: { current: Uint16Array<ArrayBuffer>; old: Uint16Array<ArrayBuffer> };
+let salt: { current: Uint16Array<ArrayBuffer>; old: Uint16Array<ArrayBuffer> } = {
+  current: crypto.getRandomValues(new Uint16Array(5)),
+  old: {} as Uint16Array<ArrayBuffer>,
+};
 
 // sempre puxe a variavel e não armazene dentro do código
 export function usesJwtInstance(): FastifyInstance['jwt'] {
@@ -43,48 +49,74 @@ export function usesSaltToken() {
 }
 
 // funçãoq que incrementa a versão em 1
-function incrementVersion(kid: KidKey): KidKey {
+function incrementVersion(kid: Kid): Kid {
   // incrementa em 1 o kid
   return `${Number(kid.slice(0, -1)) + 1}v`;
 }
 
-export function getVersionKey(): { current: KidKey; old: KidKey } {
+export function getVersionKey(): { current: Kid; old: Kid } {
   return {
-    current: sensitive.currentKid.private.kid,
-    old: sensitive.oldKid.private.kid,
+    current: sensitive.current.kid,
+    old: sensitive.old.kid,
   };
 }
 
-// cria um nova par de chaves JWT e as defini
-export async function createJWTKey(fastify: FastifyInstance) {
-  // cria o par de chaves
-  const keyPair = await subtle
-    .generateKey(webcrypto.jwt.alg, true, webcrypto.jwt.keyUsages)
-    .then(async ({ publicKey, privateKey }) => ({
-      public: await subtle.exportKey(webcrypto.jwt.format, publicKey),
-      private: await subtle.exportKey(webcrypto.jwt.format, privateKey),
-    }));
+async function convertKeyToPem(key: CryptoKey, typeKey: 'private' | 'public'): Promise<string> {
+  const base64 = Buffer.from(
+    await crypto.subtle.exportKey(typeKey === 'private' ? 'pkcs8' : 'spki', key)
+  ).toString('base64');
+  const lines = base64.match(/.{1,64}/g) || [];
 
-  // muda a chave old
-  if (sensitive.currentKid.private.kid !== '0v') sensitive.oldKid = sensitive.currentKid;
+  const typ = typeKey === 'private' ? 'PRIVATE KEY' : 'PUBLIC KEY';
+  return `-----BEGIN ${typ}-----\n${lines.join('\n')}\n-----END ${typ}-----`;
+}
 
-  // soma 1 na versão
-  const currentKid = incrementVersion(sensitive.currentKid.private.kid);
+export async function initJWTService(fastify: FastifyInstance) {
+  await fastify.register(fastifyJwt, {
+    secret: {
+      private: sensitive.current.private,
+      public: function (request, token, callback) {
+        const kid = token.header.kid as Kid;
+        if (!kid) return callback(new Error('Missing kid'), undefined);
 
-  // defini o novo par de chaves
-  sensitive.currentKid.public = { key: keyPair.public, kid: currentKid };
-  sensitive.currentKid.private = { key: keyPair.private, kid: currentKid };
+        if (kid === sensitive.current.kid) return callback(null, sensitive.current.public);
+        if (kid === sensitive.old.kid) return callback(null, sensitive.old.public);
 
-  await fastify.register(fastifyJwt as any, {
-    ...sensitive,
-    kid: sensitive.currentKid.private.kid,
+        return callback(new Error('Unknown kid in JWT header'), undefined);
+      },
+    },
+    sign: {
+      algorithm: webcrypto.jwt.registered,
+      kid: sensitive.current.kid,
+    },
   });
 
-  // declarando os novos valores
+  jwt = fastify.jwt;
+}
+
+// cria um nova par de chaves JWT e as defini
+export async function createJWTKey() {
+  // criando salt
   salt = {
     old: salt.current,
     current: crypto.getRandomValues(new Uint16Array(5)),
   };
+  // cria o par de chaves
+  const keyPair = await crypto.subtle
+    .generateKey(webcrypto.jwt.alg, true, webcrypto.jwt.keyUsages)
+    .then(async ({ privateKey, publicKey }) => ({
+      private: await convertKeyToPem(privateKey, 'private'),
+      public: await convertKeyToPem(publicKey, 'public'),
+    }));
 
-  jwt = fastify.jwt;
+  // muda a chave old
+  if (sensitive.current.kid !== '0v') sensitive.old = { ...sensitive.current };
+
+  // soma 1 na versão
+  const current = incrementVersion(sensitive.current.kid);
+
+  // defini o novo par de chaves
+  sensitive.current.private = keyPair.private;
+  sensitive.current.public = keyPair.public;
+  sensitive.current.kid = current;
 }

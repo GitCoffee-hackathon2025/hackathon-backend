@@ -1,16 +1,19 @@
+// Tipagens
+import { type Kid } from '../../typescript/requestBodyType';
+
+// Configurações
 import webcrypto from '../keys/crypto.config';
 
-const subtle = crypto.subtle;
+// Tipagens do arquivo
+type FormatKey = { key: JsonWebKey; kid: Kid };
 
 // Arquivo responsável por armazenar e gerenciar as tipagens e as chaves de criptografia
 
-type KidKey = `${number}v`;
-
 // local que armazena as chaves RSA (NÃO EXPORTAR!)
 const sensitive: {
-  public: { key: JsonWebKey; kid: KidKey };
-  private: { key: JsonWebKey; kid: KidKey };
-  old: { key: JsonWebKey; kid: KidKey };
+  public: FormatKey;
+  private: FormatKey;
+  old: FormatKey;
 } = {
   public: {
     key: {} as JsonWebKey,
@@ -27,20 +30,18 @@ const sensitive: {
 };
 
 // funçãoq que incrementa a versão em 1
-function incrementVersion(kid: KidKey): KidKey {
+function incrementVersion(kid: Kid): Kid {
   // incrementa em 1 o kid
   return `${Number(kid.slice(0, -1)) + 1}v`;
 }
 
 // retorna somente uma RSA escolhida pelo parametro da função
-export async function getKey(
-  name: keyof typeof sensitive
-): Promise<{ key: CryptoKey; kid: KidKey }> {
+export async function getKey(name: keyof typeof sensitive): Promise<{ key: CryptoKey; kid: Kid }> {
   return {
-    key: await subtle.importKey(
+    key: await crypto.subtle.importKey(
       webcrypto.rsa.format,
       sensitive[name].key,
-      webcrypto.rsa.alg.name,
+      (({ name, hash }) => ({ name, hash }))(webcrypto.rsa.alg),
       true,
       name === 'public' ? ['encrypt'] : ['decrypt']
     ),
@@ -48,18 +49,18 @@ export async function getKey(
   };
 }
 
-export function getVersionKey(): { current: KidKey; old: KidKey } {
+export function getVersionKey(): { current: Kid; old: Kid } {
   return { current: sensitive.private.kid, old: sensitive.old.kid };
 }
 
 // cria um nova par de chaves RSA e as defini
-export async function createRSAKey() {
+export async function createRSAKey(): Promise<void> {
   // cria o par de chaves
-  const keyPair = await subtle
+  const keyPair = await crypto.subtle
     .generateKey(webcrypto.rsa.alg, true, webcrypto.rsa.keyUsages)
     .then(async ({ publicKey, privateKey }) => ({
-      public: await subtle.exportKey(webcrypto.rsa.format, publicKey),
-      private: await subtle.exportKey(webcrypto.rsa.format, privateKey),
+      public: await crypto.subtle.exportKey(webcrypto.rsa.format, publicKey),
+      private: await crypto.subtle.exportKey(webcrypto.rsa.format, privateKey),
     }));
 
   // muda a chave old

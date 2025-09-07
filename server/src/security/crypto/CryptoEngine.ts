@@ -1,230 +1,124 @@
-/* 
-  import {
-  CompactEncrypt,
-  compactDecrypt,
-  CompactDecryptResult,
-  CompactJWEHeaderParameters,
-  exportJWK,
-  JWK,
-} from 'jose';
+// Tipagens
+import {
+  type RequestBody,
+  type DecryptedRequestData,
+  type Kid,
+} from '../../typescript/requestBodyType';
 
-import { constants, getKey } from '../../config/keyCrypto/KeyManager';
-import analyzeError from './utils/analyzeError';
+// Configurações
+import webcrypto from '../../config/keys/crypto.config';
 
-// Classe que responsável por descriptografar o body da requisição que o frontend fez e criptografar o dado (object) que o backend respondera.
+// Retorno do erro
+import FormatError from '../../errors/FormatError';
+
+// Funções
+import { getKey, getVersionKey } from '../../config/keyCrypto/KeyManager';
+import concatArrayBuffer from '../utils/concatArrayBuffer';
+
+// Tipagens do arquivo
+type CrudeBody = Omit<RequestBody, 'header' | 'ct'>;
 
 class CryptoEngine {
-  private async resolveSecureAESKey(
-    grossAES: string,
-    allowOld: boolean = false
-  ): Promise<
-    | {
-        status: true;
-        result: { key: CryptoKey; version: string };
-      }
-    | {
-        status: false;
-        result: string;
-      }
-  > {
+  public async sendPublicKey(): Promise<{
+    key: JsonWebKey;
+    kid: Kid;
+  }> {
     try {
-      // puxando chave privada e descriptando chave AES
-      const privateKey = await getKey('private');
-
-      // descriptando a chave AES do Front com a privada ou a velha
-      const aes: {
-        plaintext: CompactDecryptResult['plaintext'];
-        protectedHeader: CompactJWEHeaderParameters;
-        versionUsed: string;
-      } = await compactDecrypt(grossAES, privateKey.key)
-        .then((key) => ({
-          ...key,
-          versionUsed: privateKey.version,
-        }))
-        .catch(async (err) => {
-          // verificando a situação (paromêtros, versões) e o erro que ocorreu na descriptografia
-          const verify = analyzeError(err);
-          if (
-            !allowOld &&
-            privateKey.version === '1' &&
-            verify != 'unknown error' && // retorno que não identificou
-            verify != 'decryption failed'
-          )
-            throw new Error(verify);
-
-          // descriptografando a chave AES, se não funcionar o dado é incompatível
-          const oldKey = await getKey('old');
-          return await compactDecrypt(grossAES, oldKey.key)
-            .then((key) => ({ ...key, versionUsed: oldKey.version }))
-            .catch((err) => {
-              throw new Error(analyzeError(err));
-            });
-        });
-
-      // validando header
-      if ('crit' in aes.protectedHeader || 'typ' in aes.protectedHeader)
-        throw new Error('unsupported protected header parameter');
-
-      if (aes.protectedHeader.alg != constants.jwa.rsa.alg)
-        throw new Error('arg different from the original');
-
-      if (aes.protectedHeader.enc != constants.jwa.aes.enc)
-        throw new Error('enc different from the original');
-
-      if (aes.protectedHeader.kid != aes.versionUsed) throw new Error('non-coherent key version');
-
-      // importando chave AES
-      const aesKey = await crypto.subtle.importKey(
-        constants.webcrypto.aes.format,
-        new Uint8Array(aes.plaintext), // convertendo por cima, evita erro em algumas máquinas
-
-        constants.webcrypto.aes.alg,
-        true,
-        constants.webcrypto.aes.keyUsages
-      );
-
-      // retornando chave e versão da chave RSA usada
-      return { status: true, result: { key: aesKey, version: aes.versionUsed } };
-    } catch (err) {
-      return { status: false, result: String(err) };
-    }
-  }
-
-  public async getPublic(): Promise<
-    | {
-        status: true;
-        result: {
-          key: JWK;
-          version: string;
-        };
-      }
-    | {
-        status: false;
-        result: string;
-      }
-  > {
-    try {
-      // puxando a chave publica e enviando em formato JWK junto com sua versão
       const key = await getKey('public');
       return {
-        status: true,
-        result: {
-          key: await exportJWK(key.key),
-          version: key.version,
-        },
+        // enviando chave privada exportada
+        key: await crypto.subtle.exportKey(webcrypto.rsa.format, key.key),
+        kid: key.kid,
       };
-    } catch (err) {
-      return {
-        status: false,
-        result: String(err),
-      };
+    } catch (error) {
+      throw new FormatError(500, 'SystemError', 'Failed to call and export public rsa key', error);
     }
   }
 
-  public async encode(
-    info: Record<string, any>,
-    groosAES: { key: string; groos: true } | { key: CryptoKey; version: string; groos: false }
-  ): Promise<
-    | {
-        status: true;
-        result: string;
-      }
-    | {
-        status: false;
-        result: string;
-      }
-  > {
+  private async importKey(aesExported: ArrayBuffer): Promise<CryptoKey> {
     try {
-      // descriptando chave AES
-      const aes = groosAES.groos
-        ? await this.resolveSecureAESKey(groosAES.key)
-        : {
-            status: true,
-            result: {
-              key: groosAES.key,
-              version: groosAES.version,
-            },
-          };
-      if (aes.status === false) throw new Error(String(aes.result));
-
-      // criptando dado que será enviado
-      const bufferPayload = new TextEncoder().encode(JSON.stringify(info));
-      return {
-        status: true,
-        result: await new CompactEncrypt(bufferPayload)
-          .setProtectedHeader({
-            ...constants.jwa.aes,
-            kid: aes.result.version,
-          })
-          .encrypt(aes.result.key),
-      };
-    } catch (err) {
-      return {
-        status: false,
-        result: String(err),
-      };
+      // convertendo a chave para CryptoKey
+      return await crypto.subtle.importKey(
+        webcrypto.aes.format,
+        aesExported,
+        webcrypto.aes.alg.name,
+        true,
+        [...webcrypto.aes.keyUsages]
+      );
+    } catch (error) {
+      throw new FormatError(500, 'SystemError', 'Error calling aes key', error);
     }
   }
 
-  public async decode(body: string): Promise<
-    | {
-        status: true;
-        result: { payload: Record<string, any>; aes: { key: CryptoKey; version: string } };
-      }
-    | {
-        status: false;
-        result: string;
-      }
-  > {
+  public async decodeKey(ct: ArrayBuffer, kid: Kid): Promise<CryptoKey> {
     try {
-      // separando chave do dado
-      const [grossAES, grossInfo] = body.split(':::');
+      // descriptografando chave AES
+      return await this.importKey(
+        await crypto.subtle.decrypt(
+          // criando uma função autoexecutavel que retorna o name e hash
+          (({ name, hash }) => ({ name, hash }))(webcrypto.rsa.alg),
+          // comparando a versão (já verificada) da requisição e puxando a chave dela
+          (
+            await getKey(kid === getVersionKey().current ? 'private' : 'old')
+          ).key,
+          ct
+        )
+      );
+    } catch (error) {
+      if (error instanceof FormatError) throw error;
 
-      // verificando se existe os dois
-      if (!grossAES || !grossInfo) throw new Error('there is no key or data');
+      throw new FormatError(
+        401,
+        'Vandalized aes key',
+        'Corrupted or tampered request aes key',
+        error
+      );
+    }
+  }
 
-      // descriptando a chave AES do Front com a privada ou a velha
-      const aes = await this.resolveSecureAESKey(grossAES, true);
+  public async decodeData(body: CrudeBody, aes: CryptoKey): Promise<DecryptedRequestData> {
+    try {
+      // descriptando o dado
+      return await crypto.subtle
+        .decrypt(
+          { name: webcrypto.aes.alg.name, iv: body.iv },
+          aes,
+          // concatenando o ct com tag
+          concatArrayBuffer(body.ek, body.tag)
+        )
+        // ArrayBuffer -> JSON -> código
+        .then((result) => JSON.parse(new TextDecoder().decode(result)));
+    } catch (error) {
+      throw new FormatError(
+        400,
+        'Malformed ciphertext',
+        'Error decrypting data received from the request',
+        error
+      );
+    }
+  }
 
-      if (aes.status === false) throw new Error(String(aes.result));
+  public async encodeData(data: Record<string, any>, aes: CryptoKey): Promise<CrudeBody> {
+    try {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
 
-      // descriptando o dado recebido
-      const info = await compactDecrypt(grossInfo, aes.result.key);
+      const { ciphertext, tag } = await crypto.subtle
+        .encrypt(
+          { name: webcrypto.aes.alg.name, iv },
+          aes,
+          new TextEncoder().encode(JSON.stringify(data))
+        )
+        .then((ek) => ({
+          ciphertext: ek.slice(0, ek.byteLength - 16),
+          tag: ek.slice(ek.byteLength - 16),
+        }));
 
-      // validação do header do payload criptografado
-      if (info.protectedHeader.alg !== constants.jwa.aes.alg)
-        throw new Error('arg different from the original');
-      if (info.protectedHeader.enc !== constants.jwa.aes.enc)
-        throw new Error('enc different from the original');
-
-      // concluindo conversão
-      const payload: Record<string, any> = JSON.parse(new TextDecoder().decode(info.plaintext));
-
-      // validando dado
-      if (typeof payload !== 'object' || payload === null || Array.isArray(payload))
-        throw new Error('data in invalid format');
-
-      // retornando o dado recebido do Front junto com a chave AES e a versão do RSA
-      return {
-        status: true,
-        result: {
-          payload,
-          aes: {
-            key: aes.result.key,
-            version: aes.result.version,
-          },
-        },
-      };
-    } catch (err) {
-      return {
-        status: false,
-        result: String(err),
-      };
+      return { ek: ciphertext, iv, tag };
+    } catch (error) {
+      throw new FormatError(500, 'SystemError', 'Response encryption failed', error);
     }
   }
 }
 
-// instanciando a classe e exportando-a
 const cryptoEngine = new CryptoEngine();
 export default cryptoEngine;
- */

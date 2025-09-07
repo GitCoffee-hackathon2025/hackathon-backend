@@ -1,26 +1,145 @@
+// Tipagens
+import { type DecryptedRequestData } from '../../typescript/requestBodyType';
+import { type ID, type Token } from '../../typescript/token';
+
+// Configurações
 import webcrypto from '../../config/keys/crypto.config';
+import timing from '../../config/keys/timing.config';
+
+// Retorno do erro
+import FormatError from '../../errors/FormatError';
+
+// Variáveis rotacionais
 import { usesJwtInstance, usesSaltToken } from '../../config/KeyTokens/KeyManager';
 
+// Funções
 import concatArrayBuffer from '../utils/concatArrayBuffer';
 
-import { type RequestBody, type DecryptedRequestData } from '../../typescript/requestBodyType';
-
-type ID = `${number}`;
+// Tipagens do Arquivo
+type Browser = Exclude<DecryptedRequestData['browser'], null>;
+type PairToken = { refresh: string; access: string };
 
 class TokenHandler {
-  private static async hash(payload: ArrayBuffer, useOld: boolean = false) {
-    return await crypto.subtle.digest(
-      webcrypto.jwt.alg.hash.name,
-      concatArrayBuffer(payload, usesSaltToken()[!useOld ? 'current' : 'old'])
-    );
+  private static async hash(payload: ArrayBuffer, useOld: boolean = false): Promise<ArrayBuffer> {
+    try {
+      return await crypto.subtle.digest(
+        webcrypto.jwt.alg.hash.name,
+        concatArrayBuffer(payload, usesSaltToken()[!useOld ? 'current' : 'old'].buffer)
+      );
+    } catch (error) {
+      throw new FormatError(500, 'SystemError', 'Data hash failed for token', error);
+    }
   }
 
-  public static async issueTokens(id: ID, browser: DecryptedRequestData['browser']) {
-    if (!browser) throw new Error('invalid browser data');
+  private static equalHash(buf1: ArrayBuffer, buf2: ArrayBuffer): boolean {
+    const str = [buf1, buf2].map((buf) => Buffer.from(new Uint8Array(buf)).toString('base64'));
 
-    const auth = await this.hash(new TextEncoder().encode(JSON.stringify(browser.auth)));
+    return str[0] === str[1];
+  }
+
+  private static async validateToken(token: string, browser: Browser): Promise<void> {
+    try {
+      try {
+        usesJwtInstance().verify(token);
+      } catch (error) {
+        throw new FormatError(401, 'Expired token', 'Token does not belong to the server');
+      }
+
+      const payload = usesJwtInstance().decode(token) as Token;
+
+      if (!payload || typeof payload !== 'object') {
+        throw new FormatError(
+          400,
+          'Invalid token structure',
+          'Invalid token payload structure format'
+        );
+      }
+
+      const { bh } = payload;
+      const bufferAuth = new TextEncoder().encode(JSON.stringify(browser.auth)).buffer;
+
+      if (
+        bh && !this.equalHash(await this.hash(bufferAuth), bh)
+          ? !this.equalHash(await this.hash(bufferAuth, true), bh)
+          : false
+      )
+        throw new FormatError(401, 'Invalid token content', 'Token payload hash invalid');
+    } catch (error) {
+      if (error instanceof FormatError) throw error;
+      throw new FormatError(500, 'SystemError', 'Token validation failed');
+    }
+  }
+
+  private static validateBrowser(browser: Browser): void {
+    if (typeof browser.auth.number !== 'number' || typeof browser.auth.string !== 'string')
+      throw new FormatError(400, 'Identifier violation', 'Browser IDs do not exist');
+
+    const str = browser.auth.string.length;
+    const num = String(browser.auth.number).length;
+    if (str < 16 || str > 256 || num < 9 || num > 10)
+      throw new FormatError(400, 'Identifier violation', 'Different browser IDs');
+
+    if (browser.connect.byteLength !== 16)
+      throw new FormatError(400, 'First key invalid', 'First aes key size different');
+  }
+
+  public static async issueTokens(id: ID, browser: Browser): Promise<PairToken> {
+    this.validateBrowser(browser);
+
+    const auth = await this.hash(new TextEncoder().encode(JSON.stringify(browser.auth)).buffer);
     const connect = await this.hash(browser.connect);
+    try {
+      return {
+        refresh: usesJwtInstance().sign({ id, bh: auth }, { expiresIn: timing.expires.refresh }),
+        access: usesJwtInstance().sign(
+          { id, bh: auth, akid: connect },
+          { expiresIn: timing.expires.access }
+        ),
+      };
+    } catch (error) {
+      throw new FormatError(500, 'SystemError', 'Failed to sign tokens on login-up');
+    }
+  }
 
-    const token = usesJwtInstance().sign({ id, bh: auth, akid: connect }, {  });
+  public static async authenticateAccessToken(
+    authorization: string,
+    browser: Browser
+  ): Promise<ID> {
+    this.validateBrowser(browser);
+
+    const token = authorization.split(' ')[1];
+    await this.validateToken(token, browser);
+
+    try {
+      const { id, akid } = usesJwtInstance().decode(token) as Token;
+
+      if (id && akid && !this.equalHash(await this.hash(browser.connect), akid))
+        throw new FormatError(401, 'Invalid token content', 'Invalid token security information');
+
+      return id;
+    } catch (error) {
+      if (error instanceof FormatError) throw error;
+      throw new FormatError(500, 'SystemError', 'Failed to decode token in Access');
+    }
+  }
+
+  public static async refreshTokens(authorization: string, browser: Browser) {
+    this.validateBrowser(browser);
+
+    const token = authorization.split(' ')[1];
+    await this.validateToken(token, browser);
+
+    try {
+      const { id } = usesJwtInstance().decode(token) as Token;
+      if (!id)
+        throw new FormatError(401, 'Invalid token content', 'Invalid token security information');
+
+      return await this.issueTokens(id, browser);
+    } catch (error) {
+      if (error instanceof FormatError) throw error;
+      throw new FormatError(500, 'SystemError', 'Failed to decode token in Refresh');
+    }
   }
 }
+
+export default TokenHandler;
