@@ -1,57 +1,56 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+
 import { UserService } from '../service/userService';
-import { TokenService } from '../service/tokenService';
-import { UserType, UpdateUserBody, UpdateUserParams, UpdateType } from '../types/userTypes';
-
 const userService = new UserService();
+import { TokenService } from '../service/tokenService';
 const tokenService = new TokenService();
-const defaultError = 'Erro interno ao processar a solicitação. Tente novamente mais tarde.';
+import { SessionService } from '../service/sessionService';
+const sessionService = new SessionService();
 
-function getUserIdFromCookie(request: FastifyRequest): number | null {
-  const id = request.cookies.userId;
-  return id ? parseInt(id) : null;
-}
+import { LoginUser, CreateUserDTO, RecoverPassword, ExtendedUpdateBody } from '../types/userTypes';
 
-export async function loginUser(request: FastifyRequest<{ Body: UserType }>, reply: FastifyReply) {
+import crypto from 'crypto';
+
+import { ResponseHandler } from '../utils/requisitionsResposnses';
+import { CryptoUtil } from '../utils/crypto';
+import { UserEntity } from '../entities/userEntities';
+
+export async function loginUser(request: FastifyRequest<{ Body: LoginUser }>, reply: FastifyReply) {
   try {
     const { email, password } = request.body;
     const { user, comparedPassword } = await userService.login(email, password);
 
     if (!user) {
-      return reply.status(400).send({
-        succes: false,
-        message: 'Credênciais de usuário inválidas',
-        error: 'Credênciais inválidas.',
-      });
+      return ResponseHandler.invalidCredentials(reply);
     }
 
     if (!comparedPassword) {
-      return reply.status(400).send({
-        succes: false,
-        message: 'Credênciais de usuário inválidas',
-        error: 'Credênciais inválidas.',
-      });
+      return ResponseHandler.invalidCredentials(reply);
     }
+    const fingerprint = crypto
+      .createHash('sha256')
+      .update((request.headers['user-agent'] ?? '') + (request.ip ?? ''))
+      .digest('hex');
 
-    reply.setCookie('userId', user.id_user.toString(), {
+    const created = await sessionService.create(user.id_user, fingerprint);
+
+    reply.setCookie('session_id', created.sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      maxAge: 60 * 60 * 24 * 7, // segundos (7 dias)
     });
 
-    return reply.status(200).send({ success: true, message: 'Login de usuário efetivado' });
+    return ResponseHandler.success(reply, user, 'Login efetuado com sucesso.', undefined);
   } catch (err: any) {
-    return reply
-      .status(500)
-      .send({ success: false, message: err.message ?? defaultError, error: defaultError });
+    return ResponseHandler.error(reply, err.message, undefined, undefined);
   }
 }
 
 export async function registerUser(
   request: FastifyRequest<{
-    Body: UserType;
+    Body: CreateUserDTO;
   }>,
   reply: FastifyReply
 ) {
@@ -59,131 +58,168 @@ export async function registerUser(
   const type = 'EMAIL_VERIFICATION';
 
   if (!user.email) {
-    return reply.code(400).send({
-      success: false,
-      message: 'Email não consta no corpo da requisição',
-      error: 'Email obrigatório.',
-    });
+    return ResponseHandler.errorInEmail(reply, 'Email obrigatório.', undefined);
   }
 
+  if (!user.dateBirth) {
+    return ResponseHandler.error(reply, 'Data de nascimento obrigatória.', 400, ['DATE']);
+  }
+
+  if (!user.name) {
+    return ResponseHandler.error(reply, 'Nome completo obrigatório.', 400, ['NAME']);
+  }
+  if (
+    !user.password ||
+    //Regex de senha
+    !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(user.password)
+  ) {
+    return ResponseHandler.error(reply, 'Senha inválida.', 400, ['PASSWORD']);
+  }
+
+  const device_request_id = request.cookies.device_request_id;
+
   try {
-    const userAlredyExist = await userService.findUser(user.email);
+    const userAlredyExist = await userService.findByEmail(user.email);
     if (userAlredyExist) {
-      return reply.status(409).send({
-        success: false,
-        message: 'Email fornecido pelo usuário ja está em uso',
-        error: 'Este email ja está em uso.',
-      });
+      return ResponseHandler.errorInEmail(reply, 'Este email ja esta em uso.', undefined);
     }
 
-    const tokenExisting = await tokenService.verify(user.email, type);
+    const tokenExisting = await tokenService.find(user.email, type);
 
     if (!tokenExisting) {
-      return reply.code(400).send({
-        success: false,
-        message: 'Código fornecido pelo usuário não foi encontrado no banco de dados',
-        error: 'Código inválido.',
-      });
-    }
-    if (!tokenExisting.used) {
-      return reply.code(400).send({
-        success: false,
-        message: 'Código fornecido pelo usuário não foi verificado',
-        error: 'Código inválido.',
-      });
+      return ResponseHandler.errorInCode(reply, 'Código inválido.', undefined);
     }
 
-    await userService.register(request.body);
+    if (tokenExisting.deviceRequestId != device_request_id) {
+      return ResponseHandler.unauthorized(reply);
+    }
+
+    if (
+      tokenExisting.ipAddress !== request.ip ||
+      tokenExisting.userAgent !== request.headers['user-agent']
+    ) {
+      return ResponseHandler.unauthorized(reply);
+    }
+
+    if (!tokenExisting.used) {
+      return ResponseHandler.errorInCode(reply, 'Código inválido.', undefined);
+    }
+
+    await userService.register(user);
     await tokenService.delete(user.email, type);
-    return reply.status(201).send({ success: true, message: 'Usuário registrado com sucesso' });
+    reply.clearCookie('device_request_id', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    return ResponseHandler.success(reply, undefined, 'Cadastro feito com sucesso.', undefined);
   } catch (err: any) {
-    return reply
-      .status(500)
-      .send({ success: false, message: err.message ?? defaultError, error: defaultError });
+    return ResponseHandler.error(reply, err.message, undefined, undefined);
   }
 }
 
 export async function updateUser(
   request: FastifyRequest<{
-    Params: UpdateUserParams;
-    Body: { user: UpdateUserBody; type: UpdateType };
+    Body: ExtendedUpdateBody;
   }>,
   reply: FastifyReply
 ) {
   const updateType = request.body.type;
-  const type = updateType == 'PASSWORD' ? 'PASSWORD_RESET' : 'CHANGE_EMAIL';
-  const userId = getUserIdFromCookie(request);
+  const data = request.body.data;
 
   if (
     updateType != 'PASSWORD' &&
     updateType != 'NAME' &&
-    updateType != 'CEP' &&
-    updateType != 'DATE' &&
+    updateType != 'BIRTHDAY' &&
     updateType != 'EMAIL'
   ) {
-    return reply.status(401).send({
-      succes: false,
-      message: 'Tipo de atualização de usuário inválido',
-      error: 'Sem autorização para atualizar.',
-    });
+    return ResponseHandler.unauthorized(reply);
   }
 
-  if (!userId)
-    return reply.status(401).send({
-      succes: false,
-      message: 'Não autorizado pelo id',
-      error: 'Sem autorização para atualizar.',
-    });
+  try {
+    const userId = request.body.userId;
+    const user = (await userService.findById(userId)) as UserEntity;
+
+    if (updateType === 'EMAIL') {
+      const newEmail = request.body.data.email;
+      if (!newEmail) return ResponseHandler.errorInEmail(reply, 'Email obrigatório.', undefined);
+
+      const already = await userService.findByEmail(newEmail);
+      if (already) return ResponseHandler.errorInEmail(reply, 'Este email ja esta em uso.', 409);
+
+      const tokenExisting = await tokenService.find(newEmail, 'CHANGE_EMAIL');
+      if (
+        !tokenExisting ||
+        !tokenExisting.used ||
+        tokenExisting.deviceRequestId !== request.cookies.device_request_id
+      ) {
+        return ResponseHandler.unauthorized(reply);
+      }
+    }
+
+    if (updateType === 'PASSWORD') {
+      const confirmPassword = data.confirmPassword;
+      const newPassword = data.newPassword;
+
+      if (!confirmPassword || !newPassword)
+        return ResponseHandler.error(reply, 'Senha inválida', 400);
+
+      const compared = await CryptoUtil.comparePassword(confirmPassword, user.password);
+      if (!compared) return ResponseHandler.invalidCredentials(reply);
+    }
+
+    const updatedUser = await userService.update(userId, data, updateType);
+
+    return ResponseHandler.success(reply, updatedUser, 'Atualizado com sucesso.', undefined);
+  } catch (err: any) {
+    return ResponseHandler.error(reply, err.message, undefined, undefined);
+  }
+}
+
+export async function resetPassword(
+  request: FastifyRequest<{
+    Body: { data: RecoverPassword; type: 'PASSWORD' };
+  }>,
+  reply: FastifyReply
+) {
+  const email = request.body.data.email;
+  const updateType = request.body.type;
+  const type = 'PASSWORD_RESET';
+  const device_request_id = request.cookies.device_request_id;
+
+  if (updateType != 'PASSWORD') {
+    return ResponseHandler.unauthorized(reply);
+  }
 
   try {
-    const email = (await userService.findById(userId))?.email;
+    const user = await userService.findByEmail(email);
 
-    if (!email) {
-      return reply.status(400).send({
-        success: false,
-        message: 'Usuário não encontrado para atualizar algo nele',
-        error: 'Usuário não encontrado para atualizar.',
-      });
+    if (!user) {
+      return ResponseHandler.error(reply, 'Usuário não encontrado.', 404);
     }
 
-    if (updateType == 'PASSWORD' || updateType == 'EMAIL') {
-      if (email == request.body.user.email) {
-        return reply.status(400).send({
-          success: false,
-          message: 'Email fornecido pelo usuário já está em uso',
-          error: 'Esta email já esta em uso.',
-        });
-      }
+    const tokenExisting = await tokenService.find(email, type);
 
-      const tokenExisting = await tokenService.verify(email, type);
-
-      if (!tokenExisting) {
-        return reply.code(400).send({
-          success: false,
-          message: 'Código do email fornecido pelo usuário não foi encontrado no banco de dados',
-          error: 'Erro ao atualizar.',
-        });
-      }
-      if (!tokenExisting.used) {
-        return reply.code(400).send({
-          success: false,
-          message: 'Código do email fornecido pelo usuário não foi verificado',
-          error: 'Erro ao atualizar.',
-        });
-      }
+    if (!tokenExisting) {
+      return ResponseHandler.errorInCode(reply, 'Código inválido.', undefined);
+    }
+    if (tokenExisting.deviceRequestId != device_request_id) {
+      return ResponseHandler.unauthorized(reply);
     }
 
-    const updatedUser = await userService.update(userId, request.body.user, updateType);
-    if (updateType == 'PASSWORD' || updateType == 'EMAIL') await tokenService.delete(email, type);
+    if (!tokenExisting.used) {
+      return ResponseHandler.errorInCode(reply, 'Código inválido.', undefined);
+    }
 
-    return reply.status(200).send({
-      success: true,
-      message: 'Usuário atualizado com sucesso',
-      data: updatedUser,
-    });
+    const updatedUser = await userService.update(
+      user.id_user,
+      { newPassword: request.body.data.password },
+      updateType
+    );
+    await tokenService.delete(email, type);
+
+    return ResponseHandler.success(reply, updatedUser, 'Senha recuperada com sucesso.', undefined);
   } catch (err: any) {
-    return reply
-      .status(500)
-      .send({ success: false, message: err.message ?? defaultError, error: defaultError });
+    return ResponseHandler.error(reply, err.message, undefined, undefined);
   }
 }

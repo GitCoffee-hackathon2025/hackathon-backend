@@ -8,7 +8,7 @@ export class TokenService {
     this.emailRepo = new TokenRepository();
   }
 
-  async verify(email: string, type: string) {
+  async find(email: string, type: string) {
     try {
       const token = await this.emailRepo.findVerificationTokenByEmailAndType(email, type);
 
