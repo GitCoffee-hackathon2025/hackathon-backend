@@ -1,3 +1,15 @@
+export interface verificationCode {
+  email_user: string;
+  token_hash: string;
+  token_tyoe: string;
+  expires_at: Date;
+}
+
+export interface sendEmailorVerifyCode {
+  email: string;
+  type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'CHANGE_EMAIL';
+  code?: number;
+}
 
 export interface TypeReportType {
   id_type_report: number;
@@ -9,14 +21,14 @@ export interface TypeReviewType {
   name_type_review: string;
 }
 export interface ReportDTO {
-  id_type_report: number; 
+  id_type_report: number;
   id_state: number;
   id_city: number;
   id_neighborhood: number;
   content_report: string;
 }
 
-export interface ReviewDTO{
+export interface ReviewDTO {
   id_type_review: number;
   id_state: number;
   id_city: number;
@@ -74,16 +86,18 @@ export interface ReviewType {
 }
 
 export interface UpdateUserBody {
-    name?: string;
-    email?: string;
-    password?: string;
-    cep?: string;
-    tel?: string;
-    dateBirth?: Date;
+  name?: string;
+  email?: string;
+  password?: string;
+  cep?: string;
+  tel?: string;
+  dateBirth?: Date;
 }
 
+export type UpdateType = 'PASSWORD' | 'CEP' | 'EMAIL' | 'NAME' | 'DATE';
+
 export interface UpdateUserParams {
-    id: string;
+  id: string;
 }
 
 export interface ReportCommentDTO {

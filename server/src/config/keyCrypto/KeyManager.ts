@@ -1,91 +1,74 @@
-import { exportJWK, generateKeyPair, importJWK, type JWK } from 'jose';
-import type uuidType from './uuidType';
+import webcrypto from '../keys/crypto.config';
+
+const subtle = crypto.subtle;
 
 // Arquivo responsável por armazenar e gerenciar as tipagens e as chaves de criptografia
 
-// exportando as tipagens usadas na criptografia
-export const constants = {
-  jwa: {
-    rsa: { alg: 'RSA-OAEP-256', length: 2048 },
-    aes: { alg: 'dir', enc: 'A256GCM' },
-  },
-  webcrypto: {
-    // jwa: {
-    //   format: 'jwk',
-    //   hash: 'SHA-256',
-    // },
-    aes: {
-      alg: { name: 'AES-GCM', length: 256 },
-      format: 'raw',
-      keyUsages: ['encrypt', 'decrypt'],
-    },
-  },
-} as const;
+type KidKey = `${number}v`;
 
 // local que armazena as chaves RSA (NÃO EXPORTAR!)
 const sensitive: {
-  public: { key: JWK; version: number };
-  private: { key: JWK; version: number };
-  old: { key: JWK; version: number };
+  public: { key: JsonWebKey; kid: KidKey };
+  private: { key: JsonWebKey; kid: KidKey };
+  old: { key: JsonWebKey; kid: KidKey };
 } = {
   public: {
-    key: {} as JWK,
-    version: 0,
+    key: {} as JsonWebKey,
+    kid: '0v',
   },
   private: {
-    key: {} as JWK,
-    version: 0,
+    key: {} as JsonWebKey,
+    kid: '0v',
   },
   old: {
-    key: {} as JWK,
-    version: 0,
+    key: {} as JsonWebKey,
+    kid: '0v',
   },
 };
+
+// funçãoq que incrementa a versão em 1
+function incrementVersion(kid: KidKey): KidKey {
+  // incrementa em 1 o kid
+  return `${Number(kid.slice(0, -1)) + 1}v`;
+}
 
 // retorna somente uma RSA escolhida pelo parametro da função
 export async function getKey(
   name: keyof typeof sensitive
-): Promise<{ key: CryptoKey; version: string }> {
-  const returnedKey = {
-    key: (await importJWK(sensitive[name].key, constants.jwa.rsa.alg)) as CryptoKey,
-    version: String(sensitive[name].version),
+): Promise<{ key: CryptoKey; kid: KidKey }> {
+  return {
+    key: await subtle.importKey(
+      webcrypto.rsa.format,
+      sensitive[name].key,
+      webcrypto.rsa.alg.name,
+      true,
+      name === 'public' ? ['encrypt'] : ['decrypt']
+    ),
+    kid: sensitive[name].kid,
   };
-  return returnedKey;
 }
 
-// primeiro e único token que o código recebeu.
-let internalToken: uuidType | undefined = undefined;
-
-// versão das chaves RSA atuais (simplificação)
-let version = 0;
-
-// registra o primeiro token para poder usar a createKey
-export function registerToken(token: uuidType) {
-  if (internalToken !== undefined) throw new Error('token already registered');
-  internalToken = token;
+export function getVersionKey(): { current: KidKey; old: KidKey } {
+  return { current: sensitive.private.kid, old: sensitive.old.kid };
 }
 
-// cria um nova par de chaves RSA e as defini 
-export async function createKey(token: uuidType) {
-  // valida token
-  if (!internalToken || internalToken !== token) return;
-
+// cria um nova par de chaves RSA e as defini
+export async function createRSAKey() {
   // cria o par de chaves
-  const newKeys = await generateKeyPair(constants.jwa.rsa.alg, {
-    modulusLength: constants.jwa.rsa.length,
-    extractable: true,
-  }).then(async ({ publicKey, privateKey }) => ({
-    public: await exportJWK(publicKey),
-    private: await exportJWK(privateKey),
-  }));
+  const keyPair = await subtle
+    .generateKey(webcrypto.rsa.alg, true, webcrypto.rsa.keyUsages)
+    .then(async ({ publicKey, privateKey }) => ({
+      public: await subtle.exportKey(webcrypto.rsa.format, publicKey),
+      private: await subtle.exportKey(webcrypto.rsa.format, privateKey),
+    }));
 
   // muda a chave old
-  if (sensitive.private.version != 0) sensitive.old = sensitive.private;
+  if (sensitive.private.kid !== '0v') sensitive.old = sensitive.private;
 
   // soma 1 na versão
-  version = version + 1;
+  const currentKid = incrementVersion(sensitive.private.kid);
 
   // defini o novo par de chaves
-  sensitive.public = { key: newKeys.public, version };
-  sensitive.private = { key: newKeys.private, version };
+  sensitive.public = { key: keyPair.public, kid: currentKid };
+  sensitive.private = { key: keyPair.private, kid: currentKid };
 }

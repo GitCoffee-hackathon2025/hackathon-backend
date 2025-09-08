@@ -3,10 +3,17 @@ import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 import { loginUser, registerUser, updateUser } from '../controllers/userControllers';
 
-import { getReport, registerReport, deleteReport, getReportByNeighborhood } from '../controllers/reportControllers';
+import {
+  getReport,
+  registerReport,
+  deleteReport,
+  getReportByNeighborhood,
+} from '../controllers/reportControllers';
 import { getReview, registerReview, deleteReview } from '../controllers/reviewControllers';
 
 import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
+
+import { sendVerificationToken,  verifyToken } from '../controllers/tokenControllers';
 
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
   // Conta do usuário
@@ -16,16 +23,20 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
 
   // métodos para reports
   fastify.get('/reports', getReport);
-  fastify.get('/reportsByNeighborhood/:NeighborhoodId', getReportByNeighborhood)
+  fastify.get('/reportsByNeighborhood/:NeighborhoodId', getReportByNeighborhood);
   fastify.post('/reports/register', registerReport);
   fastify.post('/reports/:reportId/comments', registerReportComment);
   fastify.delete('/reports/:reportId', deleteReport);
-  
+
   // métodos para reviews
   fastify.get('/reviews', getReview);
   fastify.post('/reviews/register', registerReview);
   fastify.post('/reviews/:reviewId/comments', registerReviewComment);
   fastify.delete('/reviews/:reviewId', deleteReview);
+
+  //métodos para emails
+  fastify.post('/email/sendtoken', sendVerificationToken);
+  fastify.post('/email/verification', verifyToken)
 }
 
 export const userRoutersPlugin = fp(userRouters);
