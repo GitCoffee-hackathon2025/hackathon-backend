@@ -1,5 +1,3 @@
-
-
 import { AppDataSource } from "../db/data-source";
 import { ReportEntity, TypeReportEntity, ReportCommentEntity } from '../entities/userEntities';
 
@@ -16,10 +14,21 @@ export class ReportRepository {
         return this.reportRepo.save(report);
     }
 
- 
-
     async findReportById(id: number): Promise<ReportEntity | null> {
-        return this.reportRepo.findOneBy({ id_report: id });
+        return this.reportRepo.findOne({
+            where: { id_report: id },
+            relations: ["user", "type", "comments"], // se quiser trazer junto
+            select: [
+                "id_report",
+                "content_report",
+                "coordenadas",
+                "created_at",
+                "id_neighborhood",
+                "user",
+                "type",
+                "comments"
+            ]
+        });
     }
        
     async deleteReport(id: number): Promise<boolean> {
@@ -31,22 +40,24 @@ export class ReportRepository {
     }
 
     async findReportsByNeighborhood(id: number, limit: number = 3): Promise<ReportEntity[]> {
-  return this.reportRepo
-    .createQueryBuilder("report")
-    .leftJoinAndSelect("report.user", "user")
-    .leftJoinAndSelect("report.type", "type") // aqui é "type", não "typeReport"
-    .where("report.id_neighborhood = :id", { id })
-    .orderBy("report.id_report", "DESC")
-    .take(limit)
-    .select([
-      "report.id_report",
-      "report.content_report",
-      "report.id_neighborhood",
-      "user.id_user",
-      "user.name",
-      "type.id_type_report",
-      "type.name_type_report"
-    ])
-    .getMany();
-}
+        return this.reportRepo
+            .createQueryBuilder("report")
+            .leftJoinAndSelect("report.user", "user")
+            .leftJoinAndSelect("report.type", "type")
+            .where("report.id_neighborhood = :id", { id })
+            .orderBy("report.created_at", "DESC")
+            .take(limit)
+            .select([
+                "report.id_report",
+                "report.content_report",
+                "report.coordenadas",
+                "report.created_at",
+                "report.id_neighborhood",
+                "user.id_user",
+                "user.name",
+                "type.id_type_report",
+                "type.name_type_report"
+            ])
+            .getMany();
+    }
 }

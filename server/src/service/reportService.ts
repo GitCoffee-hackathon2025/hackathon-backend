@@ -24,14 +24,15 @@ export class ReportService {
         report.type = typeReport;
         report.user = user;
 
-        return this.reportRepo.saveReport(report);
+        const saved = await this.reportRepo.saveReport(report);
+        return saved;
     }
 
     async findReportById(id: number) {
         return this.reportRepo.findReportById(id);
     }
 
-        async deleteReport(reportId: number, userId: number): Promise<boolean> {
+    async deleteReport(reportId: number, userId: number): Promise<boolean> {
         const report = await this.reportRepo.findReportById(reportId);
         
         if (!report) throw new Error("Report não encontrado");
@@ -39,12 +40,10 @@ export class ReportService {
             throw new Error("Você não tem permissão para deletar este report");
         }
 
-  
         return this.reportRepo.deleteReport(reportId);
     }
-    async findReportByNeighborhood(id : number){
+
+    async findReportByNeighborhood(id: number) {
         return this.reportRepo.findReportsByNeighborhood(id, 3);
     }
-    
-
 }

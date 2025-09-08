@@ -70,6 +70,17 @@ export class ReportEntity {
   @JoinColumn({ name: 'id_type_report' })
   type!: TypeReportEntity;
 
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at!: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  updated_at!: Date;
+
+  @Column({ type: 'text'})
+  coordenadas!: string;
+
+  
   @Column()
   id_state!: number;
 
@@ -122,6 +133,12 @@ export class ReportCommentEntity {
 
   @Column({ type: 'text' })
   content_report_comment!: string;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at!: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  updated_at!: Date;
 
   @ManyToOne(() => UserEntity, (user) => user.reportComments)
   @JoinColumn({ name: 'id_user' })
