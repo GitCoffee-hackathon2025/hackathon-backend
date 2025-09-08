@@ -1,5 +1,7 @@
+
+
 import { AppDataSource } from "../db/data-source";
-import { ReportEntity, TypeReportEntity, ReportCommentEntity } from "../entities/userEntities";
+import { ReportEntity, TypeReportEntity, ReportCommentEntity } from '../entities/userEntities';
 
 export class ReportRepository {
     private reportRepo = AppDataSource.getRepository(ReportEntity);
@@ -29,14 +31,22 @@ export class ReportRepository {
     }
 
     async findReportsByNeighborhood(id: number, limit: number = 3): Promise<ReportEntity[]> {
-  return this.reportRepo.find({
-    where: { 
-      id_neighborhood: id 
-    },
-    order: { 
-      id_report: 'DESC'  
-    },
-    take: limit
-  })
+  return this.reportRepo
+    .createQueryBuilder("report")
+    .leftJoinAndSelect("report.user", "user")
+    .leftJoinAndSelect("report.type", "type") // aqui é "type", não "typeReport"
+    .where("report.id_neighborhood = :id", { id })
+    .orderBy("report.id_report", "DESC")
+    .take(limit)
+    .select([
+      "report.id_report",
+      "report.content_report",
+      "report.id_neighborhood",
+      "user.id_user",
+      "user.name",
+      "type.id_type_report",
+      "type.name_type_report"
+    ])
+    .getMany();
 }
 }
