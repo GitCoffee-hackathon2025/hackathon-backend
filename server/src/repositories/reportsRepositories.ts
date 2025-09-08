@@ -30,7 +30,7 @@ export class ReportRepository {
         return (result.affected ?? 0) > 0;
     }
 
-    async findReportsByNeighborhood(id: number, limit: number = 3) {
+    async findReportsByNeighborhood(id: number, limit: number = 3): Promise<ReportEntity[]> {
   return this.reportRepo
     .createQueryBuilder("report")
     .leftJoinAndSelect("report.user", "user")
