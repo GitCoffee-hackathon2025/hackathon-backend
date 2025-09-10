@@ -1,11 +1,19 @@
+// Tipagens
 import { type FastifyInstance } from 'fastify';
 
+// Configurações
+import timing from './timing.config';
+
+// Funções
 import { createRSAKey } from '../keyCrypto/KeyManager';
-import { createJWTKey } from '../KeyTokens/KeyManager';
+import { initJWTService, createJWTKey } from '../KeyTokens/KeyManager';
 
 // Classe que armazena as informações para rotacionamento de chaves e faz isso
-class KeyBootstrapCrypto {
-  private static time: number = 2592000000; // 30 dias
+class KeyBootstrap {
+  private static async createKeys() {
+    await createRSAKey();
+    await createJWTKey();
+  }
 
   private static _init: boolean = false;
 
@@ -15,15 +23,14 @@ class KeyBootstrapCrypto {
     if (this._init) throw new Error('not allowed to restart');
     this._init = true;
 
-    await createRSAKey();
-    await createJWTKey(fastify);
+    await this.createKeys();
+    await initJWTService(fastify);
+
     // inicia o rotacionador de fato
-    setTimeout(async () => {
-      await createRSAKey();
-      await createJWTKey(fastify);
-    }, this.time);
-    console.log('security module started');
+    setInterval(async () => {
+      await this.createKeys();
+    }, timing.rotates);
   }
 }
 
-export default KeyBootstrapCrypto;
+export default KeyBootstrap;
