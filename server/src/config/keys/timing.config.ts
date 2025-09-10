@@ -1,5 +1,5 @@
 const timing = {
-  rotates: 2592000000,
+  rotates: 1209600000,
   expires: {
     refresh: '10d',
     access: '10min',

@@ -5,10 +5,10 @@ export interface RequestBody {
     rsa: { alg: string; kid: Kid };
     aes: { enc: string };
   };
-  ek: ArrayBuffer;
-  iv: Uint8Array<ArrayBuffer>;
-  ct: ArrayBuffer;
-  tag: ArrayBuffer;
+  ek: string;
+  iv: string;
+  ct: string;
+  tag: string;
 }
 
 export interface DecryptedRequestData {
@@ -18,6 +18,6 @@ export interface DecryptedRequestData {
       string: string;
       number: number;
     };
-    connect: ArrayBuffer;
+    connect: string;
   } | null;
 }

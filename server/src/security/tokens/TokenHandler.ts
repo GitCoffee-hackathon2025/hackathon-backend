@@ -1,6 +1,6 @@
 // Tipagens
 import { type DecryptedRequestData } from '../../typescript/requestBodyType';
-import { type ID, type Token } from '../../typescript/token';
+import { type ID, type Token, type PairToken } from '../../typescript/token';
 
 // Configurações
 import webcrypto from '../../config/keys/crypto.config';
@@ -10,29 +10,35 @@ import timing from '../../config/keys/timing.config';
 import FormatError from '../../errors/FormatError';
 
 // Variáveis rotacionais
-import { usesJwtInstance, usesSaltToken } from '../../config/KeyTokens/KeyManager';
+import { usesJwtInstance, usesSaltToken, getVersionKey } from '../../config/KeyTokens/KeyManager';
 
 // Funções
 import concatArrayBuffer from '../utils/concatArrayBuffer';
+import BufferConverter from '../utils/BufferConverter';
 
 // Tipagens do Arquivo
 type Browser = Exclude<DecryptedRequestData['browser'], null>;
-type PairToken = { refresh: string; access: string };
 
 class TokenHandler {
-  private static async hash(payload: ArrayBuffer, useOld: boolean = false): Promise<ArrayBuffer> {
+  private static async hash(payload: ArrayBuffer, useOld: boolean = false): Promise<string> {
     try {
-      return await crypto.subtle.digest(
-        webcrypto.jwt.alg.hash.name,
-        concatArrayBuffer(payload, usesSaltToken()[!useOld ? 'current' : 'old'].buffer)
+      return BufferConverter.arrayBufferToBase64(
+        await crypto.subtle.digest(
+          webcrypto.jwt.alg.hash.name,
+          concatArrayBuffer(payload, usesSaltToken()[!useOld ? 'current' : 'old'].buffer)
+        )
       );
     } catch (error) {
       throw new FormatError(500, 'SystemError', 'Data hash failed for token', error);
     }
   }
 
-  private static equalHash(buf1: ArrayBuffer, buf2: ArrayBuffer): boolean {
-    const str = [buf1, buf2].map((buf) => Buffer.from(new Uint8Array(buf)).toString('base64'));
+  private static equalHash(buf1: string, buf2: string): boolean {
+    const buffers = [
+      BufferConverter.base64ToArrayBuffer(buf1),
+      BufferConverter.base64ToArrayBuffer(buf2),
+    ];
+    const str = [...buffers].map((buf) => Buffer.from(new Uint8Array(buf)).toString('base64'));
 
     return str[0] === str[1];
   }
@@ -79,7 +85,8 @@ class TokenHandler {
     if (str < 16 || str > 256 || num < 9 || num > 10)
       throw new FormatError(400, 'Identifier violation', 'Different browser IDs');
 
-    if (browser.connect.byteLength !== 16)
+    const connect = BufferConverter.base64ToArrayBuffer(browser.connect);
+    if (connect.byteLength !== 16)
       throw new FormatError(400, 'First key invalid', 'First aes key size different');
   }
 
@@ -87,13 +94,19 @@ class TokenHandler {
     this.validateBrowser(browser);
 
     const auth = await this.hash(new TextEncoder().encode(JSON.stringify(browser.auth)).buffer);
-    const connect = await this.hash(browser.connect);
+    const connect = await this.hash(BufferConverter.base64ToArrayBuffer(browser.connect));
     try {
       return {
-        refresh: usesJwtInstance().sign({ id, bh: auth }, { expiresIn: timing.expires.refresh }),
+        refresh: usesJwtInstance().sign(
+          { id, bh: auth },
+          { kid: getVersionKey().current, expiresIn: timing.expires.refresh }
+        ),
         access: usesJwtInstance().sign(
           { id, bh: auth, akid: connect },
-          { expiresIn: timing.expires.access }
+          {
+            kid: getVersionKey().current,
+            expiresIn: timing.expires.refresh,
+          }
         ),
       };
     } catch (error) {
@@ -113,7 +126,11 @@ class TokenHandler {
     try {
       const { id, akid } = usesJwtInstance().decode(token) as Token;
 
-      if (id && akid && !this.equalHash(await this.hash(browser.connect), akid))
+      if (
+        id &&
+        akid &&
+        !this.equalHash(await this.hash(BufferConverter.base64ToArrayBuffer(browser.connect)), akid)
+      )
         throw new FormatError(401, 'Invalid token content', 'Invalid token security information');
 
       return id;

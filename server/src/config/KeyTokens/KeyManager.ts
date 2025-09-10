@@ -1,5 +1,6 @@
 // Tipagens
 import { type FastifyInstance } from 'fastify';
+import { type DecodedJwt } from 'fast-jwt';
 import { type Kid } from '../../typescript/requestBodyType';
 
 // Configurações
@@ -75,14 +76,15 @@ export async function initJWTService(fastify: FastifyInstance) {
   await fastify.register(fastifyJwt, {
     secret: {
       private: sensitive.current.private,
-      public: function (request, token, callback) {
-        const kid = token.header.kid as Kid;
-        if (!kid) return callback(new Error('Missing kid'), undefined);
+      public: async (decoded: DecodedJwt) => {
+        const kid = decoded.header.kid as Kid;
 
-        if (kid === sensitive.current.kid) return callback(null, sensitive.current.public);
-        if (kid === sensitive.old.kid) return callback(null, sensitive.old.public);
+        if (!kid) throw new Error('Missing kid');
 
-        return callback(new Error('Unknown kid in JWT header'), undefined);
+        if (kid === sensitive.current.kid) return sensitive.current.public;
+        if (kid === sensitive.old.kid) return sensitive.old.public;
+
+        throw new Error('Unknown kid in JWT header');
       },
     },
     sign: {

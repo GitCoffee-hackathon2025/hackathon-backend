@@ -13,10 +13,11 @@ import FormatError from '../../errors/FormatError';
 
 // Funções
 import { getKey, getVersionKey } from '../../config/keyCrypto/KeyManager';
+import BufferConverter from '../utils/BufferConverter';
 import concatArrayBuffer from '../utils/concatArrayBuffer';
 
 // Tipagens do arquivo
-type CrudeBody = Omit<RequestBody, 'header' | 'ct'>;
+type CrudeBody = Omit<RequestBody, 'header' | 'ek'>;
 
 class CryptoEngine {
   public async sendPublicKey(): Promise<{
@@ -50,7 +51,7 @@ class CryptoEngine {
     }
   }
 
-  public async decodeKey(ct: ArrayBuffer, kid: Kid): Promise<CryptoKey> {
+  public async decodeKey(ek: string, kid: Kid): Promise<CryptoKey> {
     try {
       // descriptografando chave AES
       return await this.importKey(
@@ -61,7 +62,7 @@ class CryptoEngine {
           (
             await getKey(kid === getVersionKey().current ? 'private' : 'old')
           ).key,
-          ct
+          BufferConverter.base64ToArrayBuffer(ek)
         )
       );
     } catch (error) {
@@ -81,10 +82,13 @@ class CryptoEngine {
       // descriptando o dado
       return await crypto.subtle
         .decrypt(
-          { name: webcrypto.aes.alg.name, iv: body.iv },
+          { name: webcrypto.aes.alg.name, iv: BufferConverter.base64ToArrayBuffer(body.iv) },
           aes,
           // concatenando o ct com tag
-          concatArrayBuffer(body.ek, body.tag)
+          concatArrayBuffer(
+            BufferConverter.base64ToArrayBuffer(body.ct),
+            BufferConverter.base64ToArrayBuffer(body.tag)
+          )
         )
         // ArrayBuffer -> JSON -> código
         .then((result) => JSON.parse(new TextDecoder().decode(result)));
@@ -113,7 +117,11 @@ class CryptoEngine {
           tag: ek.slice(ek.byteLength - 16),
         }));
 
-      return { ek: ciphertext, iv, tag };
+      return {
+        ct: BufferConverter.arrayBufferToBase64(ciphertext),
+        iv: BufferConverter.arrayBufferToBase64(iv.buffer),
+        tag: BufferConverter.arrayBufferToBase64(tag),
+      };
     } catch (error) {
       throw new FormatError(500, 'SystemError', 'Response encryption failed', error);
     }

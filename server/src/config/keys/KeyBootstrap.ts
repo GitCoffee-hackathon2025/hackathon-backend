@@ -27,10 +27,9 @@ class KeyBootstrap {
     await initJWTService(fastify);
 
     // inicia o rotacionador de fato
-    setTimeout(async () => {
+    setInterval(async () => {
       await this.createKeys();
     }, timing.rotates);
-    console.log('security module started');
   }
 }
 
