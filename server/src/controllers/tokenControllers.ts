@@ -1,20 +1,23 @@
 import 'dotenv/config';
 import { FastifyRequest, FastifyReply } from 'fastify';
-import bcrypt from 'bcrypt';
+
 import crypto from 'crypto';
+
 import { TokenService } from '../service/tokenService';
+const tokenService = new TokenService();
 import { UserService } from '../service/userService';
+const userService = new UserService();
+
 import { transporter } from '../email/transporter';
-import { sendEmailorVerifyCode } from '../types/userTypes';
+
+import { TokenSendOrVerify } from '../types/userTypes';
+
 import { CryptoUtil } from '../utils/crypto';
 
-const tokenService = new TokenService();
-const userService = new UserService();
-const defaultError = 'Erro interno ao processar a solicitação. Tente novamente mais tarde.';
-
+import { ResponseHandler } from '../utils/requisitionsResposnses';
 
 export async function sendVerificationToken(
-  request: FastifyRequest<{ Body: sendEmailorVerifyCode }>,
+  request: FastifyRequest<{ Body: TokenSendOrVerify }>,
   reply: FastifyReply
 ) {
   const { email, type } = request.body;
@@ -22,19 +25,15 @@ export async function sendVerificationToken(
   const EXPIRES_MINUTES = 5;
 
   if (!email) {
-    return reply.code(400).send({
-      success: false,
-      message: 'Email não consta no corpo da requisição',
-      error: 'Email obrigatório.',
-    });
+    return ResponseHandler.errorInEmail(reply, 'Email obrigatório.', undefined);
+  }
+
+  if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email)) {
+    return ResponseHandler.errorInEmail(reply, 'Email inválido para cadastro.', undefined);
   }
 
   if (type !== 'EMAIL_VERIFICATION' && type !== 'PASSWORD_RESET' && type !== 'CHANGE_EMAIL') {
-    return reply.code(400).send({
-      success: false,
-      message: 'Tipo de token inválido',
-      error: defaultError,
-    });
+    return ResponseHandler.error(reply, undefined, 400, undefined);
   }
 
   const generateNumericCode = (): string => {
@@ -46,25 +45,22 @@ export async function sendVerificationToken(
   const now = new Date();
 
   try {
-    const userAlredyExist = await userService.findUser(request.body.email);
+    const userAlredyExist = await userService.findByEmail(request.body.email);
     if (userAlredyExist && type == 'EMAIL_VERIFICATION') {
-      return reply.status(409).send({
-        success: false,
-        message: 'Email fornecido pelo usuário ja está em uso',
-        error: 'Este email ja está em uso.',
-      });
+      return ResponseHandler.errorInEmail(reply, 'Este email ja esta em uso.', undefined);
     }
 
-    const tokenExisting = await tokenService.verify(email, type);
+    const tokenExisting = await tokenService.find(email, type);
 
     if (tokenExisting) {
       const elapsedMs = now.getTime() - new Date(tokenExisting.createdAt).getTime();
       if (elapsedMs < MIN_SECONDS_BETWEEN_REQUESTS * 1000) {
-        return reply.code(429).send({
-          success: false,
-          message: 'Requisição de envio de email muito recente',
-          error: `Aguarde ${MIN_SECONDS_BETWEEN_REQUESTS} segundos antes de reenviar.`,
-        });
+        return ResponseHandler.error(
+          reply,
+          `Aguarde ${MIN_SECONDS_BETWEEN_REQUESTS} segundos antes de reenviar.`,
+          429,
+          ['SUBMIT']
+        );
       }
     }
 
@@ -73,117 +69,100 @@ export async function sendVerificationToken(
     const tokenHash = await CryptoUtil.hashPassword(tokenCode);
     const expiresAt = new Date(now.getTime() + EXPIRES_MINUTES * 60 * 1000);
 
+    const deviceRequestId = crypto.randomUUID();
+
+    const ipAddress = request.ip;
+    const userAgent = request.headers['user-agent'] || 'unknown';
+
     await tokenService.register({
       emailUser: email,
       tokenHash,
       tokenType: type,
       expiresAt,
+      deviceRequestId,
+      ipAddress,
+      userAgent,
+    });
+
+    reply.setCookie('device_request_id', deviceRequestId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      expires: expiresAt, // 15 minutos
     });
 
     try {
       await transporter.sendMail({
         from: `"Hackathon" <${process.env.EMAIL}>`,
         to: email,
-        subject: type === 'EMAIL_VERIFICATION' ? 'Verificação de e-mail' : type ==='PASSWORD_RESET'? 'Recuperação de senha' : 'Mudança de email',
+        subject:
+          type === 'EMAIL_VERIFICATION'
+            ? 'Verificação de e-mail'
+            : type === 'PASSWORD_RESET'
+            ? 'Recuperação de senha'
+            : 'Mudança de email',
         text: `Seu código é: ${tokenCode}`,
         html: `<p>Seu código é: <b>${tokenCode}</b></p>`,
       });
     } catch (mailErr) {
-      return reply.code(502).send({
-        success: false,
-        message: 'Falha ao enviar e-mail.',
-        error: defaultError,
-      });
+      return ResponseHandler.error(reply, 'Falha ao enviar e-mail.', 502, undefined);
     }
 
-    return reply.code(200).send({ success: true, message: 'E-mail enviado' });
+    return ResponseHandler.success(reply, undefined, undefined, undefined);
   } catch (err: any) {
-    return reply.code(500).send({
-      success: false,
-      message: err.message ?? defaultError,
-      error: defaultError,
-    });
+    return ResponseHandler.error(reply, err.message, undefined, undefined);
   }
 }
 
 export async function verifyToken(
-  request: FastifyRequest<{ Body: sendEmailorVerifyCode }>,
+  request: FastifyRequest<{ Body: TokenSendOrVerify }>,
   reply: FastifyReply
 ) {
   const { email, type, code } = request.body;
 
   if (!email) {
-    return reply.code(400).send({
-      success: false,
-      message: 'Email não consta no corpo da requisição',
-      error: 'Email obrigatório.',
-    });
+    return ResponseHandler.errorInEmail(reply, 'Email obrigatório.', undefined);
   }
 
   if (type !== 'EMAIL_VERIFICATION' && type !== 'PASSWORD_RESET' && type !== 'CHANGE_EMAIL') {
-    return reply
-      .code(400)
-      .send({ success: false, message: 'Tipo de token inválido.', error: defaultError });
+    return ResponseHandler.error(reply, undefined, 400, undefined);
   }
 
   if (code === undefined || code === null) {
-    return reply.code(400).send({
-      success: false,
-      message: 'Código fornecido pelo usuário não consta no corpo da requisição',
-      error: 'Código é obrigatório.',
-    });
+    return ResponseHandler.errorInCode(reply, 'Código inválido.', undefined);
   }
 
+  const device_request_id = request.cookies.device_request_id;
+
   try {
-    const tokenExisting = await tokenService.verify(email, type);
+    const tokenExisting = await tokenService.find(email, type);
 
     if (!tokenExisting) {
-      return reply.code(400).send({
-        success: false,
-        message: 'Código fornecido pelo usuário não foi encontrado no banco de dados',
-        error: 'Código inválido ou não solicitado.',
-      });
+      return ResponseHandler.errorInCode(reply, 'Código inválido.', undefined);
+    }
+    if (tokenExisting.deviceRequestId != device_request_id) {
+      return ResponseHandler.unauthorized(reply);
     }
 
     if (tokenExisting.used) {
-      return reply.code(400).send({
-        success: false,
-        message: 'Código fornecido pelo usuário já foi utilizado',
-        error: 'Código já utilizado.',
-      });
+      return ResponseHandler.errorInCode(reply, 'Código expirado.', undefined);
     }
 
     const now = new Date();
 
     if (tokenExisting.expiresAt && now > tokenExisting.expiresAt) {
-      return reply.code(400).send({
-        success: false,
-        message: 'Código fornecido pelo usuário está expirado',
-        error: 'Código expirado, solicite um novo código.',
-      });
+      return ResponseHandler.errorInCode(reply, 'Código expirado.', undefined);
     }
 
     const isMatch = await CryptoUtil.comparePassword(String(code), tokenExisting.tokenHash);
 
     if (!isMatch) {
-      return reply.code(400).send({
-        success: false,
-        message: 'Código fornecido pelo usuário foi encontrado porém está incorreto',
-        error: 'Código inválido ou não solicitado.',
-      });
+      return ResponseHandler.errorInCode(reply, 'Código inválido.', undefined);
     }
     await tokenService.update(email, type);
 
-    return reply.code(200).send({
-      success: true,
-      message: 'Código válido.',
-      error: 'Código fornecido pelo usuário está validado',
-    });
+    return ResponseHandler.success(reply, undefined, undefined, undefined);
   } catch (err: any) {
-    return reply.code(500).send({
-      success: false,
-      message: err.message ?? defaultError,
-      error: defaultError,
-    });
+    return ResponseHandler.error(reply, err.message, undefined, undefined);
   }
 }

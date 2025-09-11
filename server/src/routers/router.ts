@@ -9,17 +9,30 @@ import {
   deleteReport,
   getReportByNeighborhood,
 } from '../controllers/reportControllers';
+
 import { getReview, registerReview, deleteReview } from '../controllers/reviewControllers';
 
 import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
 
-import { sendVerificationToken,  verifyToken } from '../controllers/tokenControllers';
+import { sendVerificationToken, verifyToken } from '../controllers/tokenControllers';
+
+import { authenticateSession } from '../plugins/authenticate';
+
+import { UpdateUserBody, UpdateType, ExtendedUpdateBody } from '../types/userTypes';
 
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
   // Conta do usuário
   fastify.post('/auth/login', loginUser);
   fastify.post('/auth/register', registerUser);
-  fastify.put('/auth/update', updateUser);
+  fastify.put<{
+    Body: ExtendedUpdateBody;
+  }>(
+    '/auth/update',
+    {
+      preHandler: authenticateSession,
+    },
+    updateUser
+  );
 
   // métodos para reports
   fastify.get('/reports', getReport);
@@ -36,7 +49,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
 
   //métodos para emails
   fastify.post('/email/sendtoken', sendVerificationToken);
-  fastify.post('/email/verification', verifyToken)
+  fastify.post('/email/verification', verifyToken);
 }
 
 export const userRoutersPlugin = fp(userRouters);

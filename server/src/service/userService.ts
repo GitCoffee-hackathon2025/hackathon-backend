@@ -1,6 +1,6 @@
 import { UserRepository } from '../repositories/userRepositories';
+import { UpdateType, CreateUserDTO, UpdateUserBody, UpdateUserBodyWithPassword } from '../types/userTypes';
 import { UserEntity } from '../entities/userEntities';
-import { UpdateType, UserType } from '../types/userTypes';
 import { CryptoUtil } from '../utils/crypto';
 
 export class UserService {
@@ -25,7 +25,7 @@ export class UserService {
     }
   }
 
-  async register(data: Partial<UserType>) {
+  async register(data: CreateUserDTO) {
     try {
       const user = new UserEntity();
       Object.assign(user, data);
@@ -41,12 +41,16 @@ export class UserService {
     }
   }
 
-  async update(id: number, dataUser: Partial<UserEntity>, type: UpdateType) {
+  async update(id: number, data: UpdateUserBody, type: UpdateType) {
     try {
-      if (type == 'PASSWORD' && dataUser.password) {
-        dataUser.password = await CryptoUtil.hashPassword(dataUser.password);
+      if (type == 'PASSWORD' && data.newPassword) {
+        (data as UpdateUserBodyWithPassword).password = await CryptoUtil.hashPassword(data.newPassword);
       }
-      await this.userRepo.update(id, dataUser);
+
+      delete data.newPassword;
+      delete data.confirmPassword;
+      
+      await this.userRepo.update(id, data);
 
       const updatedUser = await this.findById(id);
 
@@ -66,7 +70,7 @@ export class UserService {
     }
   }
 
-  async findUser(email: string) {
+  async findByEmail(email: string) {
     try {
       const user = await this.userRepo.findByEmail(email);
 

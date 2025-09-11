@@ -1,15 +1,53 @@
-export interface verificationCode {
-  email_user: string;
-  token_hash: string;
-  token_tyoe: string;
-  expires_at: Date;
+export interface LoginUser {
+  email: string;
+  password: string;
 }
 
-export interface sendEmailorVerifyCode {
+export interface TokenSendOrVerify {
   email: string;
   type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'CHANGE_EMAIL';
   code?: number;
 }
+
+export type InputErro = ('EMAIL' | 'PASSWORD' | 'NAME' | 'BIRTHDAY' | 'CODE' | 'SUBMIT' | 'DATE')[];
+
+
+export interface RecoverPassword {
+  email: string;
+  password: string;
+}
+
+export class CreateUserDTO {
+  name!: string;
+  email!: string;
+  password!: string;
+  dateBirth!: Date;
+}
+
+export class CreateSessionDTO {
+  sessionId!: string;
+  userId!: number;
+}
+
+export interface UpdateUserBody {
+  name?: string;
+  email?: string;
+  confirmPassword?: string;
+  newPassword?: string;
+  dateBirth?: Date;
+}
+export type UpdateType = 'PASSWORD' | 'EMAIL' | 'NAME' | 'BIRTHDAY';
+
+export type ExtendedUpdateBody = {
+  userId: number;
+} & {
+  data: UpdateUserBody;
+  type: UpdateType;
+};
+
+export type UpdateUserBodyWithPassword = UpdateUserBody & { password: string };
+
+/////////////
 
 export interface TypeReportType {
   id_type_report: number;
@@ -83,21 +121,6 @@ export interface ReviewType {
   id_neighborhood: number;
   content_review: string;
   comments?: ReviewCommentType[];
-}
-
-export interface UpdateUserBody {
-  name?: string;
-  email?: string;
-  password?: string;
-  cep?: string;
-  tel?: string;
-  dateBirth?: Date;
-}
-
-export type UpdateType = 'PASSWORD' | 'CEP' | 'EMAIL' | 'NAME' | 'DATE';
-
-export interface UpdateUserParams {
-  id: string;
 }
 
 export interface ReportCommentDTO {
