@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { ReportService } from "../service/reportService";
 import { ReportDTO } from "../types/userTypes";
+import { ReportEntity } from "../entities/userEntities";
 
 const reportService = new ReportService();
 
@@ -17,10 +18,22 @@ export async function registerReport(
     if (!userId) return reply.status(401).send({ message: "Não autorizado" });
 
     try {
-        await reportService.registerReport(userId, request.body);
-        return reply.status(201).send();
+        const report = await reportService.registerReport(userId, request.body);
+         if (!report) {
+            return reply.status(404).send({ message: "Relatório não encontrado" })};
+        return reply.status(201).send({
+            success: true,
+            message: "Relatório registrado com sucesso",
+            data: {
+                id: report.id_report,
+                content: report.content_report,
+                coordenadas: report.coordenadas,
+                created_at: report.created_at,
+            }
+        });
     } catch (error) {
         return reply.status(400).send({ 
+            success: false,
             message: error instanceof Error ? error.message : "Erro desconhecido" 
         });
     }
@@ -35,10 +48,7 @@ export async function deleteReport(
     if (!userId) return reply.status(401).send({ message: "Não autorizado" });
 
     try {
-        const success = await reportService.deleteReport(
-            reportId,
-            userId
-        );
+        const success = await reportService.deleteReport(reportId, userId);
         
         if (!success) {
             return reply.status(404).send({
@@ -66,37 +76,44 @@ export async function getReport(
     try {
         const report = await reportService.findReportById(Number(request.params.id));
         if (!report) return reply.status(404).send({ message: "Relatório não encontrado" });
-        return reply.send(report);
+        
+        return reply.send({
+            success: true,
+            data: {
+                id: report.id_report,
+                content: report.content_report,
+                coordenadas: report.coordenadas,
+                created_at: report.created_at,
+                user: report.user ? { id: report.user.id_user, name: report.user.name } : null,
+                type: report.type ? { id: report.type.id_type_report, name: report.type.name_type_report } : null,
+            }
+        });
     } catch (error) {
         return reply.status(400).send({ 
+            success: false,
             message: error instanceof Error ? error.message : "Erro desconhecido" 
         });
     }
 }
-
 
 export async function getReportByNeighborhood(
   request: FastifyRequest<{ Params: { NeighborhoodId: string } }>, 
   reply: FastifyReply
 ) {
   try {
-    console.log('ID recebido:', request.params.NeighborhoodId);
-    
     const id = Number(request.params.NeighborhoodId);
-    console.log('ID convertido:', id);
-    
-
     if (isNaN(id)) {
       return reply.status(400).send({ 
+        success: false,
         message: "ID do bairro deve ser um número válido" 
       });
     }
 
     const reports = await reportService.findReportByNeighborhood(id);
     
-    // Verifica se encontrou reports (array vazio = não encontrou)
     if (reports.length === 0) {
       return reply.status(404).send({ 
+        success: false,
         message: "Nenhum relatório encontrado para este bairro",
         data: []
       });
@@ -104,13 +121,20 @@ export async function getReportByNeighborhood(
     
     return reply.send({
       success: true,
-      data: reports,
-      count: reports.length
+      count: reports.length,
+      data: reports.map(r => ({
+        id: r.id_report,
+        content: r.content_report,
+        coordenadas: r.coordenadas,
+        created_at: r.created_at,
+        user: r.user ? { id: r.user.id_user, name: r.user.name } : null,
+        type: r.type ? { id: r.type.id_type_report, name: r.type.name_type_report } : null,
+      }))
     });
     
   } catch (error) {
-    console.error('Erro ao buscar reports:', error);
     return reply.status(500).send({ 
+      success: false,
       message: error instanceof Error ? error.message : "Erro interno do servidor" 
     });
   }
