@@ -49,7 +49,7 @@ export type UpdateUserBodyWithPassword = UpdateUserBody & { password: string };
 
 /////////////
 
-export interface TypeReportType {
+export interface TypeOccurrenceType {
   id_type_report: number;
   name_type_report: string;
 }
@@ -58,7 +58,7 @@ export interface TypeReviewType {
   id_type_review: number;
   name_type_review: string;
 }
-export interface ReportDTO {
+export interface OccurrenceDTO {
   id_type_report: number;
   id_state: number;
   id_city: number;
@@ -74,13 +74,13 @@ export interface UserType {
   dateBirth: Date;
   cep: string;
   tel: string;
-  reports?: ReportType[];
+  reports?: OccurrenceType[];
 }
 
-export interface ReportType {
+export interface OccurrenceType {
   id_report: number;
   user: UserType;
-  type: TypeReportType;
+  type: TypeOccurrenceType;
   id_state: number;
   id_city: number;
   id_neighborhood: number;

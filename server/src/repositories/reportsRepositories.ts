@@ -1,19 +1,19 @@
 import { AppDataSource } from '../db/data-source';
-import { ReportEntity, TypeReportEntity } from '../entities/userEntities';
+import { OccurrenceEntity, TypeOccurrenceEntity } from '../entities/userEntities';
 
-export class ReportRepository {
-  private reportRepo = AppDataSource.getRepository(ReportEntity);
-  private typeReportRepo = AppDataSource.getRepository(TypeReportEntity);
+export class OccurrenceRepository {
+  private reportRepo = AppDataSource.getRepository(OccurrenceEntity);
+  private typeOccurrenceRepo = AppDataSource.getRepository(TypeOccurrenceEntity);
 
-  async findTypeReportById(id: number): Promise<TypeReportEntity | null> {
-    return this.typeReportRepo.findOneBy({ id_type_report: id });
+  async findTypeOccurrenceById(id: number): Promise<TypeOccurrenceEntity | null> {
+    return this.typeOccurrenceRepo.findOneBy({ id_type_report: id });
   }
 
-  async saveReport(report: ReportEntity): Promise<ReportEntity | null> {
-    return this.reportRepo.save(report);
+  async saveOccurrence(occurrence: OccurrenceEntity): Promise<OccurrenceEntity | null> {
+    return this.reportRepo.save(occurrence);
   }
 
-  async findReportById(id: number): Promise<ReportEntity | null> {
+  async findOccurrenceById(id: number): Promise<OccurrenceEntity | null> {
     return this.reportRepo.findOne({
       where: { id_report: id },
       relations: ['user', 'type', 'comments'], // se quiser trazer junto
@@ -30,25 +30,25 @@ export class ReportRepository {
     });
   }
 
-  async deleteReport(id: number): Promise<boolean> {
+  async deleteOccurrence(id: number): Promise<boolean> {
     const result: any = await this.reportRepo.delete(id);
     return (result.affected ?? 0) > 0;
   }
 
-  async findReportsByNeighborhood(id: number, limit: number = 3): Promise<ReportEntity[]> {
+  async findOccurrencesByNeighborhood(id: number, limit: number = 3): Promise<OccurrenceEntity[]> {
     return this.reportRepo
-      .createQueryBuilder('report')
-      .leftJoinAndSelect('report.user', 'user')
-      .leftJoinAndSelect('report.type', 'type')
-      .where('report.id_neighborhood = :id', { id })
-      .orderBy('report.created_at', 'DESC')
+      .createQueryBuilder('occurrence')
+      .leftJoinAndSelect('occurrence.user', 'user')
+      .leftJoinAndSelect('occurrence.type', 'type')
+      .where('occurrence.id_neighborhood = :id', { id })
+      .orderBy('occurrence.created_at', 'DESC')
       .take(limit)
       .select([
-        'report.id_report',
-        'report.content_report',
-        'report.coordenadas',
-        'report.created_at',
-        'report.id_neighborhood',
+        'occurrence.id_report',
+        'occurrence.content_report',
+        'occurrence.coordenadas',
+        'occurrence.created_at',
+        'occurrence.id_neighborhood',
         'user.id_user',
         'user.name',
         'type.id_type_report',

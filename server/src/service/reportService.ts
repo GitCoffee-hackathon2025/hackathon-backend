@@ -1,49 +1,49 @@
-import { ReportRepository } from "../repositories/reportsRepositories";
+import { OccurrenceRepository } from "../repositories/reportsRepositories";
 import { UserRepository } from "../repositories/userRepositories";
-import { ReportEntity } from "../entities/userEntities";
-import { ReportDTO } from "../types/userTypes";
+import { OccurrenceEntity } from "../entities/userEntities";
+import { OccurrenceDTO } from "../types/userTypes";
 
-export class ReportService {
-    private reportRepo: ReportRepository;
+export class OccurrenceService {
+    private reportRepo: OccurrenceRepository;
     private userRepo: UserRepository;
 
     constructor() {
-        this.reportRepo = new ReportRepository();
+        this.reportRepo = new OccurrenceRepository();
         this.userRepo = new UserRepository();
     }
 
-    async registerReport(userId: number, dataReport: ReportDTO) {
+    async registerOccurrence(userId: number, dataOccurrence: OccurrenceDTO) {
         const user = await this.userRepo.findById(userId);
-        const typeReport = await this.reportRepo.findTypeReportById(dataReport.id_type_report);
+        const typeOccurrence = await this.reportRepo.findTypeOccurrenceById(dataOccurrence.id_type_report);
         
-        if (!typeReport) throw new Error("Tipo de relatório não encontrado");
+        if (!typeOccurrence) throw new Error("Tipo de relatório não encontrado");
         if (!user) throw new Error("Usuário não encontrado");
 
-        const report = new ReportEntity();
-        Object.assign(report, dataReport);
-        report.type = typeReport;
-        report.user = user;
+        const occurrence = new OccurrenceEntity();
+        Object.assign(occurrence, dataOccurrence);
+        occurrence.type = typeOccurrence;
+        occurrence.user = user;
 
-        const saved = await this.reportRepo.saveReport(report);
+        const saved = await this.reportRepo.saveOccurrence(occurrence);
         return saved;
     }
 
-    async findReportById(id: number) {
-        return this.reportRepo.findReportById(id);
+    async findOccurrenceById(id: number) {
+        return this.reportRepo.findOccurrenceById(id);
     }
 
-    async deleteReport(reportId: number, userId: number): Promise<boolean> {
-        const report = await this.reportRepo.findReportById(reportId);
+    async deleteOccurrence(reportId: number, userId: number): Promise<boolean> {
+        const occurrence = await this.reportRepo.findOccurrenceById(reportId);
         
-        if (!report) throw new Error("Report não encontrado");
-        if (report.user.id_user !== userId) {
-            throw new Error("Você não tem permissão para deletar este report");
+        if (!occurrence) throw new Error("occurrence não encontrado");
+        if (occurrence.user.id_user !== userId) {
+            throw new Error("Você não tem permissão para deletar este occurrence");
         }
 
-        return this.reportRepo.deleteReport(reportId);
+        return this.reportRepo.deleteOccurrence(reportId);
     }
 
-    async findReportByNeighborhood(id: number) {
-        return this.reportRepo.findReportsByNeighborhood(id, 3);
+    async findOccurrenceByNeighborhood(id: number) {
+        return this.reportRepo.findOccurrencesByNeighborhood(id, 3);
     }
 }

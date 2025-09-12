@@ -1,34 +1,34 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { ReportService } from "../service/reportService";
-import { ReportDTO } from "../types/userTypes";
-// import { ReportEntity } from "../entities/userEntities";
+import { OccurrenceService } from "../service/reportService";
+import { OccurrenceDTO } from "../types/userTypes";
+// import { OccurrenceEntity } from "../entities/userEntities";
 
-const reportService = new ReportService();
+const reportService = new OccurrenceService();
 
 function getUserIdFromCookie(request: FastifyRequest): number | null {
     const id = request.cookies.userId;
     return id ? parseInt(id) : null;
 }
 
-export async function registerReport(
-    request: FastifyRequest<{ Body: ReportDTO }>,
+export async function registerOccurrence(
+    request: FastifyRequest<{ Body: OccurrenceDTO }>,
     reply: FastifyReply
 ) {
     const userId = getUserIdFromCookie(request);
     if (!userId) return reply.status(401).send({ message: "Não autorizado" });
 
     try {
-        const report = await reportService.registerReport(userId, request.body);
-         if (!report) {
+        const occurrence = await reportService.registerOccurrence(userId, request.body);
+         if (!occurrence) {
             return reply.status(404).send({ message: "Relatório não encontrado" })};
         return reply.status(201).send({
             success: true,
             message: "Relatório registrado com sucesso",
             data: {
-                id: report.id_report,
-                content: report.content_report,
-                coordenadas: report.coordenadas,
-                created_at: report.created_at,
+                id: occurrence.id_report,
+                content: occurrence.content_report,
+                coordenadas: occurrence.coordenadas,
+                created_at: occurrence.created_at,
             }
         });
     } catch (error) {
@@ -39,7 +39,7 @@ export async function registerReport(
     }
 }
 
-export async function deleteReport(
+export async function deleteOccurrence(
     request: FastifyRequest<{ Params: { reportId: number } }>,
     reply: FastifyReply
 ) {
@@ -48,44 +48,44 @@ export async function deleteReport(
     if (!userId) return reply.status(401).send({ message: "Não autorizado" });
 
     try {
-        const success = await reportService.deleteReport(reportId, userId);
+        const success = await reportService.deleteOccurrence(reportId, userId);
         
         if (!success) {
             return reply.status(404).send({
                 success: false,
-                message: "Report não encontrado"
+                message: "occurrence não encontrado"
             });
         }
 
         return reply.send({
             success: true,
-            message: "Report deletado com sucesso"
+            message: "occurrence deletado com sucesso"
         });
     } catch (error) {
         return reply.status(400).send({
             success: false,
-            message: error instanceof Error ? error.message : "Erro ao deletar report"
+            message: error instanceof Error ? error.message : "Erro ao deletar occurrence"
         });
     }
 }
 
-export async function getReport(
+export async function getOccurrence(
     request: FastifyRequest<{ Params: { id: number } }>,
     reply: FastifyReply
 ) {
     try {
-        const report = await reportService.findReportById(Number(request.params.id));
-        if (!report) return reply.status(404).send({ message: "Relatório não encontrado" });
+        const occurrence = await reportService.findOccurrenceById(Number(request.params.id));
+        if (!occurrence) return reply.status(404).send({ message: "Relatório não encontrado" });
         
         return reply.send({
             success: true,
             data: {
-                id: report.id_report,
-                content: report.content_report,
-                coordenadas: report.coordenadas,
-                created_at: report.created_at,
-                user: report.user ? { id: report.user.id_user, name: report.user.name } : null,
-                type: report.type ? { id: report.type.id_type_report, name: report.type.name_type_report } : null,
+                id: occurrence.id_report,
+                content: occurrence.content_report,
+                coordenadas: occurrence.coordenadas,
+                created_at: occurrence.created_at,
+                user: occurrence.user ? { id: occurrence.user.id_user, name: occurrence.user.name } : null,
+                type: occurrence.type ? { id: occurrence.type.id_type_report, name: occurrence.type.name_type_report } : null,
             }
         });
     } catch (error) {
@@ -96,7 +96,7 @@ export async function getReport(
     }
 }
 
-export async function getReportByNeighborhood(
+export async function getOccurrenceByNeighborhood(
   request: FastifyRequest<{ Params: { NeighborhoodId: string } }>, 
   reply: FastifyReply
 ) {
@@ -109,7 +109,7 @@ export async function getReportByNeighborhood(
       });
     }
 
-    const reports = await reportService.findReportByNeighborhood(id);
+    const reports = await reportService.findOccurrenceByNeighborhood(id);
     
     if (reports.length === 0) {
       return reply.status(404).send({ 

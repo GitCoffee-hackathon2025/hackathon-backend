@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import {
   UserEntity,
-  ReportEntity,
-  TypeReportEntity,
+  OccurrenceEntity,
+  TypeOccurrenceEntity,
   TokenEntity,
   VerificationTokenEntity,
 } from '../entities/userEntities'; // Ajuste o caminho conforme necessário
@@ -17,7 +17,7 @@ export const AppDataSource = new DataSource({
   database: 'hackathon',
   synchronize: true,
   logging: true,
-  entities: [UserEntity, ReportEntity, TypeReportEntity, TokenEntity, VerificationTokenEntity],
+  entities: [UserEntity, OccurrenceEntity, TypeOccurrenceEntity, TokenEntity, VerificationTokenEntity],
   migrations: [],
   subscribers: [],
 });

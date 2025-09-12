@@ -1,15 +1,15 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn, PrimaryColumn } from 'typeorm';
 
 @Entity()
-export class TypeReportEntity {
+export class TypeOccurrenceEntity {
   @PrimaryGeneratedColumn()
   id_type_report!: number;
 
   @Column({ type: 'varchar', length: 100 })
   name_type_report!: string;
 
-  @OneToMany(() => ReportEntity, (report) => report.type)
-  reports!: ReportEntity[];
+  @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.type)
+  reports!: OccurrenceEntity[];
 }
 
 @Entity()
@@ -29,15 +29,15 @@ export class UserEntity {
   @Column()
   dateBirth!: Date;
 
-  @OneToMany(() => ReportEntity, (report) => report.user)
-  reports!: ReportEntity[];
+  @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.user)
+  reports!: OccurrenceEntity[];
 
   @OneToMany(() => UserSessionEntity, (session) => session.user)
   sessions!: UserSessionEntity[];
 }
 
 @Entity()
-export class ReportEntity {
+export class OccurrenceEntity {
   @PrimaryGeneratedColumn()
   id_report!: number;
 
@@ -45,9 +45,9 @@ export class ReportEntity {
   @JoinColumn({ name: 'id_user' })
   user!: UserEntity;
 
-  @ManyToOne(() => TypeReportEntity, (type) => type.reports)
+  @ManyToOne(() => TypeOccurrenceEntity, (type) => type.reports)
   @JoinColumn({ name: 'id_type_report' })
-  type!: TypeReportEntity;
+  type!: TypeOccurrenceEntity;
 
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
