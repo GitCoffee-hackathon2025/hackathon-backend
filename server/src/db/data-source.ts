@@ -1,11 +1,9 @@
 import { DataSource } from 'typeorm';
-import {
-  UserEntity,
-  OccurrenceEntity,
-  TypeOccurrenceEntity,
-  TokenEntity,
-  VerificationTokenEntity,
-} from '../entities/userEntities'; // Ajuste o caminho conforme necessário
+
+import UserEntity from '../entities/UserEntity';
+import { OccurrenceEntity, TypeOccurrenceEntity } from '../entities/OccurrenceEntities';
+import { TokenEntity, VerificationTokenEntity } from '../entities/TokenEntities';
+
 import 'dotenv/config';
 
 export const AppDataSource = new DataSource({
@@ -17,7 +15,13 @@ export const AppDataSource = new DataSource({
   database: 'hackathon',
   synchronize: true,
   logging: true,
-  entities: [UserEntity, OccurrenceEntity, TypeOccurrenceEntity, TokenEntity, VerificationTokenEntity],
+  entities: [
+    UserEntity,
+    OccurrenceEntity,
+    TypeOccurrenceEntity,
+    TokenEntity,
+    VerificationTokenEntity,
+  ],
   migrations: [],
   subscribers: [],
 });
