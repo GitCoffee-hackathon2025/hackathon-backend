@@ -3,13 +3,13 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColum
 @Entity()
 export class TypeOccurrenceEntity {
   @PrimaryGeneratedColumn()
-  id_type_report!: number;
+  id_type_occurrence!: number;
 
   @Column({ type: 'varchar', length: 100 })
-  name_type_report!: string;
+  name_type_occurrence!: string;
 
   @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.type)
-  reports!: OccurrenceEntity[];
+  occurrences!: OccurrenceEntity[];
 }
 
 @Entity()
@@ -30,7 +30,7 @@ export class UserEntity {
   dateBirth!: Date;
 
   @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.user)
-  reports!: OccurrenceEntity[];
+  occurrences!: OccurrenceEntity[];
 
   @OneToMany(() => UserSessionEntity, (session) => session.user)
   sessions!: UserSessionEntity[];
@@ -39,14 +39,14 @@ export class UserEntity {
 @Entity()
 export class OccurrenceEntity {
   @PrimaryGeneratedColumn()
-  id_report!: number;
+  id_occurrence!: number;
 
-  @ManyToOne(() => UserEntity, (user) => user.reports)
+  @ManyToOne(() => UserEntity, (user) => user.occurrences)
   @JoinColumn({ name: 'id_user' })
   user!: UserEntity;
 
-  @ManyToOne(() => TypeOccurrenceEntity, (type) => type.reports)
-  @JoinColumn({ name: 'id_type_report' })
+  @ManyToOne(() => TypeOccurrenceEntity, (type) => type.occurrences)
+  @JoinColumn({ name: 'id_type_occurrence' })
   type!: TypeOccurrenceEntity;
 
 
@@ -70,7 +70,7 @@ export class OccurrenceEntity {
   id_neighborhood!: number;
 
   @Column({ type: 'text' })
-  content_report!: string;
+  content_occurrence!: string;
 }
 
 @Entity()

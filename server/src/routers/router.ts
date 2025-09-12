@@ -8,7 +8,7 @@ import {
   registerOccurrence,
   deleteOccurrence,
   getOccurrenceByNeighborhood,
-} from '../controllers/reportControllers';
+} from '../controllers/occurrenceControllers';
 
 import { sendVerificationToken, verifyToken } from '../controllers/tokenControllers';
 
@@ -30,11 +30,11 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
     updateUser
   );
 
-  // métodos para reports
-  fastify.get('/reports', getOccurrence);
-  fastify.get('/reportsByNeighborhood/:NeighborhoodId', getOccurrenceByNeighborhood);
-  fastify.post('/reports/register', registerOccurrence);
-  fastify.delete('/reports/:reportId', deleteOccurrence);
+  // métodos para occurrences
+  fastify.get('/occurrences', getOccurrence);
+  fastify.get('/occurrencesByNeighborhood/:NeighborhoodId', getOccurrenceByNeighborhood);
+  fastify.post('/occurrences/register', registerOccurrence);
+  fastify.delete('/occurrences/:occurrenceId', deleteOccurrence);
 
   //métodos para emails
   fastify.post('/email/sendtoken', sendVerificationToken);

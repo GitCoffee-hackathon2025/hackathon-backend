@@ -50,8 +50,8 @@ export type UpdateUserBodyWithPassword = UpdateUserBody & { password: string };
 /////////////
 
 export interface TypeOccurrenceType {
-  id_type_report: number;
-  name_type_report: string;
+  id_type_occurrence: number;
+  name_type_occurrence: string;
 }
 
 export interface TypeReviewType {
@@ -59,11 +59,11 @@ export interface TypeReviewType {
   name_type_review: string;
 }
 export interface OccurrenceDTO {
-  id_type_report: number;
+  id_type_occurrence: number;
   id_state: number;
   id_city: number;
   id_neighborhood: number;
-  content_report: string;
+  content_occurrence: string;
 }
 
 export interface UserType {
@@ -74,15 +74,15 @@ export interface UserType {
   dateBirth: Date;
   cep: string;
   tel: string;
-  reports?: OccurrenceType[];
+  occurrences?: OccurrenceType[];
 }
 
 export interface OccurrenceType {
-  id_report: number;
+  id_occurrence: number;
   user: UserType;
   type: TypeOccurrenceType;
   id_state: number;
   id_city: number;
   id_neighborhood: number;
-  content_report: string;
+  content_occurrence: string;
 }

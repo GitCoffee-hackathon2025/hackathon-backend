@@ -1,9 +1,9 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { OccurrenceService } from "../service/reportService";
+import { OccurrenceService } from "../service/occurrenceService";
 import { OccurrenceDTO } from "../types/userTypes";
 // import { OccurrenceEntity } from "../entities/userEntities";
 
-const reportService = new OccurrenceService();
+const occurrenceService = new OccurrenceService();
 
 function getUserIdFromCookie(request: FastifyRequest): number | null {
     const id = request.cookies.userId;
@@ -18,15 +18,15 @@ export async function registerOccurrence(
     if (!userId) return reply.status(401).send({ message: "Não autorizado" });
 
     try {
-        const occurrence = await reportService.registerOccurrence(userId, request.body);
+        const occurrence = await occurrenceService.registerOccurrence(userId, request.body);
          if (!occurrence) {
             return reply.status(404).send({ message: "Relatório não encontrado" })};
         return reply.status(201).send({
             success: true,
             message: "Relatório registrado com sucesso",
             data: {
-                id: occurrence.id_report,
-                content: occurrence.content_report,
+                id: occurrence.id_occurrence,
+                content: occurrence.content_occurrence,
                 coordenadas: occurrence.coordenadas,
                 created_at: occurrence.created_at,
             }
@@ -40,15 +40,15 @@ export async function registerOccurrence(
 }
 
 export async function deleteOccurrence(
-    request: FastifyRequest<{ Params: { reportId: number } }>,
+    request: FastifyRequest<{ Params: { occurrenceId: number } }>,
     reply: FastifyReply
 ) {
     const userId = getUserIdFromCookie(request);
-    const reportId = Number(request.params.reportId);
+    const occurrenceId = Number(request.params.occurrenceId);
     if (!userId) return reply.status(401).send({ message: "Não autorizado" });
 
     try {
-        const success = await reportService.deleteOccurrence(reportId, userId);
+        const success = await occurrenceService.deleteOccurrence(occurrenceId, userId);
         
         if (!success) {
             return reply.status(404).send({
@@ -74,18 +74,18 @@ export async function getOccurrence(
     reply: FastifyReply
 ) {
     try {
-        const occurrence = await reportService.findOccurrenceById(Number(request.params.id));
+        const occurrence = await occurrenceService.findOccurrenceById(Number(request.params.id));
         if (!occurrence) return reply.status(404).send({ message: "Relatório não encontrado" });
         
         return reply.send({
             success: true,
             data: {
-                id: occurrence.id_report,
-                content: occurrence.content_report,
+                id: occurrence.id_occurrence,
+                content: occurrence.content_occurrence,
                 coordenadas: occurrence.coordenadas,
                 created_at: occurrence.created_at,
                 user: occurrence.user ? { id: occurrence.user.id_user, name: occurrence.user.name } : null,
-                type: occurrence.type ? { id: occurrence.type.id_type_report, name: occurrence.type.name_type_report } : null,
+                type: occurrence.type ? { id: occurrence.type.id_type_occurrence, name: occurrence.type.name_type_occurrence } : null,
             }
         });
     } catch (error) {
@@ -109,9 +109,9 @@ export async function getOccurrenceByNeighborhood(
       });
     }
 
-    const reports = await reportService.findOccurrenceByNeighborhood(id);
+    const occurrences = await occurrenceService.findOccurrenceByNeighborhood(id);
     
-    if (reports.length === 0) {
+    if (occurrences.length === 0) {
       return reply.status(404).send({ 
         success: false,
         message: "Nenhum relatório encontrado para este bairro",
@@ -121,14 +121,14 @@ export async function getOccurrenceByNeighborhood(
     
     return reply.send({
       success: true,
-      count: reports.length,
-      data: reports.map(r => ({
-        id: r.id_report,
-        content: r.content_report,
+      count: occurrences.length,
+      data: occurrences.map(r => ({
+        id: r.id_occurrence,
+        content: r.content_occurrence,
         coordenadas: r.coordenadas,
         created_at: r.created_at,
         user: r.user ? { id: r.user.id_user, name: r.user.name } : null,
-        type: r.type ? { id: r.type.id_type_report, name: r.type.name_type_report } : null,
+        type: r.type ? { id: r.type.id_type_occurrence, name: r.type.name_type_occurrence } : null,
       }))
     });
     
