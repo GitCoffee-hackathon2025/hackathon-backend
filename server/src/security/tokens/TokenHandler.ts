@@ -3,7 +3,6 @@ import { type DecryptedRequestData } from '../../typescript/requestBodyType';
 import { type ID, type Token, type PairToken } from '../../typescript/token';
 
 // Configurações
-import webcrypto from '../../config/keys/crypto.config';
 import timing from '../../config/keys/timing.config';
 
 // Retorno do erro
@@ -13,7 +12,7 @@ import FormatError from '../../errors/FormatError';
 import { usesJwtInstance, usesSaltToken, getVersionKey } from '../../config/KeyTokens/KeyManager';
 
 // Funções
-import concatArrayBuffer from '../utils/concatArrayBuffer';
+import TokenHashService from './TokenHashService';
 import BufferConverter from '../utils/BufferConverter';
 
 // Tipagens do Arquivo
@@ -22,31 +21,6 @@ type Browser = Exclude<DecryptedRequestData['browser'], null>;
 const inputErro: Uppercase<string>[] = ['TOKEN'];
 
 class TokenHandler {
-  private static async hash(payload: ArrayBuffer, useOld: boolean = false): Promise<string> {
-    try {
-      return BufferConverter.arrayBufferToBase64(
-        await crypto.subtle.digest(
-          webcrypto.jwt.alg.hash.name,
-          concatArrayBuffer(payload, usesSaltToken()[!useOld ? 'current' : 'old'].buffer)
-        )
-      );
-    } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Data hash failed for token', {
-        inputErro,
-      });
-    }
-  }
-
-  private static equalHash(buf1: string, buf2: string): boolean {
-    const buffers = [
-      BufferConverter.base64ToArrayBuffer(buf1),
-      BufferConverter.base64ToArrayBuffer(buf2),
-    ];
-    const str = [...buffers].map((buf) => Buffer.from(new Uint8Array(buf)).toString('base64'));
-
-    return str[0] === str[1];
-  }
-
   private static async validateToken(token: string, browser: Browser): Promise<void> {
     try {
       try {
@@ -72,8 +46,8 @@ class TokenHandler {
       const bufferAuth = new TextEncoder().encode(JSON.stringify(browser.auth)).buffer;
 
       if (
-        bh && !this.equalHash(await this.hash(bufferAuth), bh)
-          ? !this.equalHash(await this.hash(bufferAuth, true), bh)
+        bh && !TokenHashService.equalHash(await TokenHashService.hash(bufferAuth), bh)
+          ? !TokenHashService.equalHash(await TokenHashService.hash(bufferAuth, true), bh)
           : false
       )
         throw new FormatError(401, 'Invalid token content', 'Token payload hash invalid', {
@@ -108,8 +82,12 @@ class TokenHandler {
   public static async issueTokens(id: ID, browser: Browser): Promise<PairToken> {
     this.validateBrowser(browser);
 
-    const auth = await this.hash(new TextEncoder().encode(JSON.stringify(browser.auth)).buffer);
-    const connect = await this.hash(BufferConverter.base64ToArrayBuffer(browser.connect));
+    const auth = await TokenHashService.hash(
+      new TextEncoder().encode(JSON.stringify(browser.auth)).buffer
+    );
+    const connect = await TokenHashService.hash(
+      BufferConverter.base64ToArrayBuffer(browser.connect)
+    );
     try {
       return {
         refresh: usesJwtInstance().sign(
@@ -144,7 +122,10 @@ class TokenHandler {
       if (
         id &&
         akid &&
-        !this.equalHash(await this.hash(BufferConverter.base64ToArrayBuffer(browser.connect)), akid)
+        !TokenHashService.equalHash(
+          await TokenHashService.hash(BufferConverter.base64ToArrayBuffer(browser.connect)),
+          akid
+        )
       )
         throw new FormatError(401, 'Invalid token content', 'Invalid token security information', {
           inputErro,
