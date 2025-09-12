@@ -1,20 +1,20 @@
 import { AppDataSource } from '../db/data-source';
 import { OccurrenceEntity, TypeOccurrenceEntity } from '../entities/userEntities';
 
-export class OccurrenceRepository {
-  private occurrenceRepo = AppDataSource.getRepository(OccurrenceEntity);
-  private typeOccurrenceRepo = AppDataSource.getRepository(TypeOccurrenceEntity);
+class OccurrenceRepository {
+  private repo = AppDataSource.getRepository(OccurrenceEntity);
+  private typeRepo = AppDataSource.getRepository(TypeOccurrenceEntity);
 
-  async findTypeOccurrenceById(id: number): Promise<TypeOccurrenceEntity | null> {
-    return this.typeOccurrenceRepo.findOneBy({ id_type_occurrence: id });
+  async findTypeById(id: number): Promise<TypeOccurrenceEntity | null> {
+    return this.typeRepo.findOneBy({ id_type_occurrence: id });
   }
 
-  async saveOccurrence(occurrence: OccurrenceEntity): Promise<OccurrenceEntity | null> {
-    return this.occurrenceRepo.save(occurrence);
+  async save(occurrence: OccurrenceEntity): Promise<OccurrenceEntity | null> {
+    return this.repo.save(occurrence);
   }
 
-  async findOccurrenceById(id: number): Promise<OccurrenceEntity | null> {
-    return this.occurrenceRepo.findOne({
+  async findById(id: number): Promise<OccurrenceEntity | null> {
+    return this.repo.findOne({
       where: { id_occurrence: id },
       relations: ['user', 'type', 'comments'], // se quiser trazer junto
       select: [
@@ -30,13 +30,8 @@ export class OccurrenceRepository {
     });
   }
 
-  async deleteOccurrence(id: number): Promise<boolean> {
-    const result: any = await this.occurrenceRepo.delete(id);
-    return (result.affected ?? 0) > 0;
-  }
-
-  async findOccurrencesByNeighborhood(id: number, limit: number = 3): Promise<OccurrenceEntity[]> {
-    return this.occurrenceRepo
+  async findByNeighborhood(id: number, limit: number = 3): Promise<OccurrenceEntity[]> {
+    return this.repo
       .createQueryBuilder('occurrence')
       .leftJoinAndSelect('occurrence.user', 'user')
       .leftJoinAndSelect('occurrence.type', 'type')
@@ -56,4 +51,11 @@ export class OccurrenceRepository {
       ])
       .getMany();
   }
+
+  async delete(id: number): Promise<boolean> {
+    const result: any = await this.repo.delete(id);
+    return (result.affected ?? 0) > 0;
+  }
 }
+
+export default OccurrenceRepository;

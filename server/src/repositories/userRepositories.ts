@@ -1,7 +1,7 @@
 import { AppDataSource } from '../db/data-source';
 import { UserEntity } from '../entities/userEntities';
 
-export class UserRepository {
+class UserRepository {
   private repo = AppDataSource.getRepository(UserEntity);
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -14,10 +14,9 @@ export class UserRepository {
   }
 
   async findById(id: number): Promise<UserEntity | null> {
-
     try {
-        const user = await this.repo.findOneBy({ id_user: id });
-        return user
+      const user = await this.repo.findOneBy({ id_user: id });
+      return user;
     } catch (error) {
       throw new Error(`Erro ao buscar usuário por id: ${String(error)}`);
     }
@@ -39,3 +38,5 @@ export class UserRepository {
     }
   }
 }
+
+export default UserRepository;
