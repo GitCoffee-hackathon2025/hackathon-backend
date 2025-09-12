@@ -19,6 +19,8 @@ import concatArrayBuffer from '../utils/concatArrayBuffer';
 // Tipagens do arquivo
 type CrudeBody = Omit<RequestBody, 'header' | 'ek'>;
 
+const inputErro: Uppercase<string>[] = ['CRYPTO'];
+
 class CryptoEngine {
   public async sendPublicKey(): Promise<{
     key: JsonWebKey;
@@ -32,7 +34,7 @@ class CryptoEngine {
         kid: key.kid,
       };
     } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Failed to call and export public rsa key', error);
+      throw new FormatError(500, 'SystemError', 'Failed to call and export public rsa key');
     }
   }
 
@@ -47,7 +49,7 @@ class CryptoEngine {
         [...webcrypto.aes.keyUsages]
       );
     } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Error calling aes key', error);
+      throw new FormatError(500, 'SystemError', 'Error calling aes key');
     }
   }
 
@@ -68,12 +70,9 @@ class CryptoEngine {
     } catch (error) {
       if (error instanceof FormatError) throw error;
 
-      throw new FormatError(
-        401,
-        'Vandalized aes key',
-        'Corrupted or tampered request aes key',
-        error
-      );
+      throw new FormatError(401, 'Vandalized aes key', 'Corrupted or tampered request aes key', {
+        inputErro,
+      });
     }
   }
 
@@ -97,7 +96,7 @@ class CryptoEngine {
         400,
         'Malformed ciphertext',
         'Error decrypting data received from the request',
-        error
+        { inputErro }
       );
     }
   }
@@ -123,7 +122,7 @@ class CryptoEngine {
         tag: BufferConverter.arrayBufferToBase64(tag),
       };
     } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Response encryption failed', error);
+      throw new FormatError(500, 'SystemError', 'Response encryption failed');
     }
   }
 }

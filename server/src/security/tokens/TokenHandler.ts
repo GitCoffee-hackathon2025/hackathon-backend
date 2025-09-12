@@ -19,6 +19,8 @@ import BufferConverter from '../utils/BufferConverter';
 // Tipagens do Arquivo
 type Browser = Exclude<DecryptedRequestData['browser'], null>;
 
+const inputErro: Uppercase<string>[] = ['TOKEN'];
+
 class TokenHandler {
   private static async hash(payload: ArrayBuffer, useOld: boolean = false): Promise<string> {
     try {
@@ -29,7 +31,9 @@ class TokenHandler {
         )
       );
     } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Data hash failed for token', error);
+      throw new FormatError(500, 'SystemError', 'Data hash failed for token', {
+        inputErro,
+      });
     }
   }
 
@@ -48,7 +52,9 @@ class TokenHandler {
       try {
         usesJwtInstance().verify(token);
       } catch (error) {
-        throw new FormatError(401, 'Expired token', 'Token does not belong to the server');
+        throw new FormatError(401, 'Expired token', 'Token does not belong to the server', {
+          inputErro,
+        });
       }
 
       const payload = usesJwtInstance().decode(token) as Token;
@@ -57,7 +63,8 @@ class TokenHandler {
         throw new FormatError(
           400,
           'Invalid token structure',
-          'Invalid token payload structure format'
+          'Invalid token payload structure format',
+          { inputErro }
         );
       }
 
@@ -69,25 +76,33 @@ class TokenHandler {
           ? !this.equalHash(await this.hash(bufferAuth, true), bh)
           : false
       )
-        throw new FormatError(401, 'Invalid token content', 'Token payload hash invalid');
+        throw new FormatError(401, 'Invalid token content', 'Token payload hash invalid', {
+          inputErro,
+        });
     } catch (error) {
       if (error instanceof FormatError) throw error;
-      throw new FormatError(500, 'SystemError', 'Token validation failed');
+      throw new FormatError(500, 'SystemError', 'Token validation failed', { inputErro });
     }
   }
 
   private static validateBrowser(browser: Browser): void {
     if (typeof browser.auth.number !== 'number' || typeof browser.auth.string !== 'string')
-      throw new FormatError(400, 'Identifier violation', 'Browser IDs do not exist');
+      throw new FormatError(400, 'Identifier violation', 'Browser IDs do not exist', {
+        inputErro: ['TOKEN', 'BROWSER'],
+      });
 
     const str = browser.auth.string.length;
     const num = String(browser.auth.number).length;
     if (str < 16 || str > 256 || num < 9 || num > 10)
-      throw new FormatError(400, 'Identifier violation', 'Different browser IDs');
+      throw new FormatError(400, 'Identifier violation', 'Different browser IDs', {
+        inputErro: ['TOKEN', 'BROWSER'],
+      });
 
     const connect = BufferConverter.base64ToArrayBuffer(browser.connect);
     if (connect.byteLength !== 16)
-      throw new FormatError(400, 'First key invalid', 'First aes key size different');
+      throw new FormatError(400, 'First key invalid', 'First aes key size different', {
+        inputErro: ['TOKEN', 'BROWSER'],
+      });
   }
 
   public static async issueTokens(id: ID, browser: Browser): Promise<PairToken> {
@@ -131,7 +146,9 @@ class TokenHandler {
         akid &&
         !this.equalHash(await this.hash(BufferConverter.base64ToArrayBuffer(browser.connect)), akid)
       )
-        throw new FormatError(401, 'Invalid token content', 'Invalid token security information');
+        throw new FormatError(401, 'Invalid token content', 'Invalid token security information', {
+          inputErro,
+        });
 
       return id;
     } catch (error) {
@@ -149,7 +166,9 @@ class TokenHandler {
     try {
       const { id } = usesJwtInstance().decode(token) as Token;
       if (!id)
-        throw new FormatError(401, 'Invalid token content', 'Invalid token security information');
+        throw new FormatError(401, 'Invalid token content', 'Invalid token security information', {
+          inputErro,
+        });
 
       return await this.issueTokens(id, browser);
     } catch (error) {
