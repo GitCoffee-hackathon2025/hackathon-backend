@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn, PrimaryColumn, OneToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn, PrimaryColumn } from 'typeorm';
 
 @Entity()
 export class TypeReportEntity {
@@ -11,18 +11,6 @@ export class TypeReportEntity {
   @OneToMany(() => ReportEntity, (report) => report.type)
   reports!: ReportEntity[];
 }
-
-// @Entity()
-// export class TypeReviewEntity {
-//   @PrimaryGeneratedColumn()
-//   id_type_review!: number;
-
-//   @Column({ type: 'varchar', length: 100 })
-//   name_type_review!: string;
-
-//   @OneToMany(() => ReviewEntity, (review) => review.type)
-//   reviews!: ReviewEntity[];
-// }
 
 @Entity()
 export class UserEntity {
@@ -43,15 +31,6 @@ export class UserEntity {
 
   @OneToMany(() => ReportEntity, (report) => report.user)
   reports!: ReportEntity[];
-
-  // @OneToMany(() => ReviewEntity, (review) => review.user)
-  // reviews!: ReviewEntity[];
-
-  // @OneToMany(() => ReportCommentEntity, (comment) => comment.user)
-  // reportComments!: ReportCommentEntity[]; // nome tipo review até 100 chars
-
-  // @OneToMany(() => ReviewCommentEntity, (comment) => comment.user)
-  // reviewComments!: ReviewCommentEntity[];
 
   @OneToMany(() => UserSessionEntity, (session) => session.user)
   sessions!: UserSessionEntity[];
@@ -92,79 +71,7 @@ export class ReportEntity {
 
   @Column({ type: 'text' })
   content_report!: string;
-
-  // @OneToMany(() => ReportCommentEntity, (comment) => comment.report)
-  // comments!: ReportCommentEntity[];
 }
-
-// @Entity()
-// export class ReviewEntity {
-//   @PrimaryGeneratedColumn()
-//   id_review!: number;
-
-//   @ManyToOne(() => UserEntity, (user) => user.reviews)
-//   @JoinColumn({ name: 'id_user' })
-//   user!: UserEntity;
-
-//   @ManyToOne(() => TypeReviewEntity, (typeReview) => typeReview.reviews)
-//   @JoinColumn({ name: 'id_type_review' })
-//   type!: TypeReviewEntity;
-
-//   @Column()
-//   id_state!: number;
-
-//   @Column()
-//   id_city!: number;
-
-//   @Column()
-//   id_neighborhood!: number;
-
-//   @Column({ type: 'text' })
-//   content_review!: string;
-
-//   @OneToMany(() => ReviewCommentEntity, (comment) => comment.review)
-//   comments!: ReviewCommentEntity[];
-// }
-
-// @Entity()
-// export class ReportCommentEntity {
-//   @PrimaryGeneratedColumn()
-//   id_report_comment!: number;
-
-//   @Column({ type: 'text' })
-//   content_report_comment!: string;
-
-//   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-//   created_at!: Date;
-
-//   @Column({ type: 'timestamp', nullable: true })
-//   updated_at!: Date;
-
-//   @ManyToOne(() => UserEntity, (user) => user.reportComments)
-//   @JoinColumn({ name: 'id_user' })
-//   user!: UserEntity;
-
-//   @ManyToOne(() => ReportEntity, (report) => report.comments)
-//   @JoinColumn({ name: 'id_report' })
-//   report!: ReportEntity;
-// }
-
-// @Entity()
-// export class ReviewCommentEntity {
-//   @PrimaryGeneratedColumn()
-//   id_review_comment!: number;
-
-//   @Column({ type: 'text' })
-//   content_review_comment!: string;
-
-//   @ManyToOne(() => UserEntity, (user) => user.reviewComments)
-//   @JoinColumn({ name: 'id_user' })
-//   user!: UserEntity;
-
-//   @ManyToOne(() => ReviewEntity, (review) => review.comments)
-//   @JoinColumn({ name: 'id_review' })
-//   review!: ReviewEntity;
-// }
 
 @Entity()
 export class TokenEntity {
@@ -173,14 +80,6 @@ export class TokenEntity {
 
   @Column({ type: 'text' })
   content_review_comment!: string;
-
-  // @ManyToOne(() => UserEntity, (user) => user.reviewComments)
-  // @JoinColumn({ name: 'id_user' })
-  // user!: UserEntity;
-
-  // @ManyToOne(() => ReviewEntity, (review) => review.comments)
-  // @JoinColumn({ name: 'id_review' })
-  // review!: ReviewEntity;
 }
 
 @Entity()
