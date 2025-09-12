@@ -6,8 +6,8 @@ import { type RequestBody } from '../../typescript/requestBodyType';
 import SendError from '../../errors/SendError';
 
 // Classes
-import TokenHandler from '../../security/tokens/TokenHandler';
 import CryptoManager from '../../security/crypto/CryptoManager';
+import TokenManager from '../../security/tokens/TokenManager';
 
 // Middlewares
 import validateFormatBody from '../../middlewares/validateFormatBody';
@@ -28,7 +28,7 @@ export async function LoginUpController(request: FastifyRequest, reply: FastifyR
     const id = '1'; // exemplo
 
     // é necessário passar o !
-    const tokens = await TokenHandler.issueTokens(id, payload.decoded.browser!);
+    const tokens = await TokenManager.issueTokens(id, payload.decoded.browser!);
 
     reply.status(200).send(tokens);
   } catch (error) {
@@ -46,7 +46,7 @@ export async function LoginController(request: FastifyRequest, reply: FastifyRep
 
     const payload = await CryptoManager.decode(body);
 
-    const idOfToken = await TokenHandler.authenticateAccessToken(
+    const idOfToken = await TokenManager.authenticateAccessToken(
       request.headers.authorization!,
       payload.decoded.browser!
     );
@@ -70,7 +70,7 @@ export async function RefreshController(request: FastifyRequest, reply: FastifyR
 
     const payload = await CryptoManager.decode(body);
 
-    const tokens = await TokenHandler.refreshTokens(
+    const tokens = await TokenManager.refreshTokens(
       request.headers.authorization!,
       payload.decoded.browser!
     );

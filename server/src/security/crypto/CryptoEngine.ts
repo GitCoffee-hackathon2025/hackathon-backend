@@ -19,8 +19,6 @@ import concatArrayBuffer from '../utils/concatArrayBuffer';
 // Tipagens do arquivo
 type CrudeBody = Omit<RequestBody, 'header' | 'ek'>;
 
-const inputErro: Uppercase<string>[] = ['CRYPTO'];
-
 class CryptoEngine {
   public async sendPublicKey(): Promise<{
     key: JsonWebKey;
@@ -71,7 +69,7 @@ class CryptoEngine {
       if (error instanceof FormatError) throw error;
 
       throw new FormatError(401, 'Vandalized aes key', 'Corrupted or tampered request aes key', {
-        inputErro,
+        inputErro: ['CRYPTO'],
       });
     }
   }
@@ -96,7 +94,7 @@ class CryptoEngine {
         400,
         'Malformed ciphertext',
         'Error decrypting data received from the request',
-        { inputErro }
+        { inputErro: ['CRYPTO'] }
       );
     }
   }
