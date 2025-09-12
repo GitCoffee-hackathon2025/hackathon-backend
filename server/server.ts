@@ -2,7 +2,7 @@
 import "reflect-metadata";
 import Fastify from 'fastify'
 import { AppDataSource } from "./src/db/data-source";
-import { userRoutersPlugin } from './src/routers/router';
+import userRoutersPlugin from './src/routers/router';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from "@fastify/cors";
 

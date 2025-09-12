@@ -54,10 +54,6 @@ export interface TypeOccurrenceType {
   name_type_occurrence: string;
 }
 
-export interface TypeReviewType {
-  id_type_review: number;
-  name_type_review: string;
-}
 export interface OccurrenceDTO {
   id_type_occurrence: number;
   id_state: number;
