@@ -1,11 +1,8 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { type FastifyRequest, type FastifyReply } from 'fastify';
 
-import { UserService } from '../service/userService';
-const userService = new UserService();
-import { TokenService } from '../service/tokenService';
-const tokenService = new TokenService();
-import { SessionService } from '../service/sessionService';
-const sessionService = new SessionService();
+import userService from '../service/UserService';
+import tokenService from '../service/TokenService';
+import sessionService from '../service/SessionService';
 
 import { LoginUser, CreateUserDTO, RecoverPassword, ExtendedUpdateBody } from '../types/userTypes';
 
@@ -13,7 +10,7 @@ import crypto from 'crypto';
 
 import { ResponseHandler } from '../utils/requisitionsResposnses';
 import { CryptoUtil } from '../utils/crypto';
-import { UserEntity } from '../entities/userEntities';
+import UserEntity from '../entities/UserEntity';
 
 export async function loginUser(request: FastifyRequest<{ Body: LoginUser }>, reply: FastifyReply) {
   try {

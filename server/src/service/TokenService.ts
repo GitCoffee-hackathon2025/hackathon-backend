@@ -1,7 +1,7 @@
-import { TokenRepository} from '../repositories/tokenRepositories';
-import { VerificationTokenEntity } from '../entities/userEntities';
+import TokenRepository from '../repositories/tokenRepositories';
+import { VerificationTokenEntity } from '../entities/TokenEntities';
 
-export class TokenService {
+class TokenService {
   private emailRepo: TokenRepository;
 
   constructor() {
@@ -37,7 +37,7 @@ export class TokenService {
     }
   }
 
-  async update(email: string, type:string) {
+  async update(email: string, type: string) {
     try {
       await this.emailRepo.updateToken(email, type);
     } catch (error) {
@@ -45,3 +45,6 @@ export class TokenService {
     }
   }
 }
+
+const tokenService = new TokenService();
+export default tokenService;

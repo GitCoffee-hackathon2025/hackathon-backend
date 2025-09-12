@@ -1,9 +1,14 @@
-import { UserRepository } from '../repositories/userRepositories';
-import { UpdateType, CreateUserDTO, UpdateUserBody, UpdateUserBodyWithPassword } from '../types/userTypes';
-import { UserEntity } from '../entities/userEntities';
+import UserRepository from '../repositories/userRepositories';
+import {
+  UpdateType,
+  CreateUserDTO,
+  UpdateUserBody,
+  UpdateUserBodyWithPassword,
+} from '../types/userTypes';
+import UserEntity from '../entities/UserEntity';
 import { CryptoUtil } from '../utils/crypto';
 
-export class UserService {
+class UserService {
   private userRepo: UserRepository;
 
   constructor() {
@@ -44,12 +49,14 @@ export class UserService {
   async update(id: number, data: UpdateUserBody, type: UpdateType) {
     try {
       if (type == 'PASSWORD' && data.newPassword) {
-        (data as UpdateUserBodyWithPassword).password = await CryptoUtil.hashPassword(data.newPassword);
+        (data as UpdateUserBodyWithPassword).password = await CryptoUtil.hashPassword(
+          data.newPassword
+        );
       }
 
       delete data.newPassword;
       delete data.confirmPassword;
-      
+
       await this.userRepo.update(id, data);
 
       const updatedUser = await this.findById(id);
@@ -80,3 +87,6 @@ export class UserService {
     }
   }
 }
+
+const userService = new UserService();
+export default userService;

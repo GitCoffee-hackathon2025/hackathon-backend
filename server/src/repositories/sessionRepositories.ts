@@ -1,8 +1,8 @@
 // repositories/sessionRepositories.ts
 import { AppDataSource } from '../db/data-source';
-import { UserSessionEntity } from '../entities/userEntities';
+import { UserSessionEntity } from '../entities/TokenEntities';
 
-export class SessionRepository {
+class SessionRepository {
   private repo = AppDataSource.getRepository(UserSessionEntity);
 
   async save(session: Partial<UserSessionEntity>): Promise<UserSessionEntity> {
@@ -25,3 +25,5 @@ export class SessionRepository {
     await this.repo.update({ userId }, { active: false });
   }
 }
+
+export default SessionRepository;

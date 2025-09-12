@@ -1,12 +1,10 @@
 import { type FastifyRequest, type FastifyReply } from 'fastify';
-import OccurrenceService from '../service/occurrenceService';
+import occurrenceService from '../service/OccurrenceService';
 import { OccurrenceDTO } from '../types/userTypes';
 // import { OccurrenceEntity } from "../entities/userEntities";
 
 // Retorno do erro
 import SendError from './../errors/SendError';
-
-const occurrenceService = new OccurrenceService();
 
 function getUserIdFromCookie(request: FastifyRequest): number | null {
   const id = request.cookies.userId;

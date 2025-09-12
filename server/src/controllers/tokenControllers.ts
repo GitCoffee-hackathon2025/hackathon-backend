@@ -1,12 +1,10 @@
 import 'dotenv/config';
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { type FastifyRequest, type FastifyReply } from 'fastify';
 
 import crypto from 'crypto';
 
-import { TokenService } from '../service/tokenService';
-const tokenService = new TokenService();
-import { UserService } from '../service/userService';
-const userService = new UserService();
+import tokenService from '../service/TokenService';
+import userService from '../service/UserService';
 
 import { transporter } from '../email/transporter';
 

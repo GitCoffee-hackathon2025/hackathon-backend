@@ -1,9 +1,9 @@
 // service/sessionService.ts
 import crypto from 'crypto';
-import { SessionRepository } from '../repositories/sessionRepositories';
-import { UserSessionEntity } from '../entities/userEntities';
+import SessionRepository from '../repositories/sessionRepositories';
+import { UserSessionEntity } from '../entities/TokenEntities';
 
-export class SessionService {
+class SessionService {
   private repo = new SessionRepository();
   private ABS_TIMEOUT_MS = 1000 * 60 * 60 * 24 * 7; // ex: 7 dias
 
@@ -35,3 +35,6 @@ export class SessionService {
     await this.repo.invalidate(sessionId);
   }
 }
+
+const sessionService = new SessionService();
+export default sessionService;

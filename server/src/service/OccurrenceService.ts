@@ -1,6 +1,6 @@
 import OccurrenceRepository from '../repositories/occurrencesRepositories';
 import UserRepository from '../repositories/userRepositories';
-import { OccurrenceEntity } from '../entities/userEntities';
+import { OccurrenceEntity } from '../entities/OccurrenceEntities';
 import { OccurrenceDTO } from '../types/userTypes';
 
 // Retorno do erro
@@ -56,4 +56,5 @@ class OccurrenceService {
   }
 }
 
-export default OccurrenceService;
+const occurrenceService = new OccurrenceService();
+export default occurrenceService;

@@ -1,5 +1,5 @@
 import { AppDataSource } from '../db/data-source';
-import { OccurrenceEntity, TypeOccurrenceEntity } from '../entities/userEntities';
+import { OccurrenceEntity, TypeOccurrenceEntity } from '../entities/OccurrenceEntities';
 
 class OccurrenceRepository {
   private repo = AppDataSource.getRepository(OccurrenceEntity);

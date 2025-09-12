@@ -1,9 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import crypto from 'crypto';
-import { SessionService } from '../service/sessionService';
+import sessionService from '../service/SessionService';
 import { ResponseHandler } from '../utils/requisitionsResposnses';
-
-const sessionService = new SessionService();
 
 export async function authenticateSession(request: FastifyRequest, reply: FastifyReply) {
   try {
