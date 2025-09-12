@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { ReportService } from "../service/reportService";
 import { ReportDTO } from "../types/userTypes";
-import { ReportEntity } from "../entities/userEntities";
+// import { ReportEntity } from "../entities/userEntities";
 
 const reportService = new ReportService();
 

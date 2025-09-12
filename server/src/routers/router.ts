@@ -10,9 +10,8 @@ import {
   getReportByNeighborhood,
 } from '../controllers/reportControllers';
 
-import { getReview, registerReview, deleteReview } from '../controllers/reviewControllers';
-
-import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
+// import { getReview, registerReview, deleteReview } from '../controllers/reviewControllers';
+// import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
 
 import { sendVerificationToken, verifyToken } from '../controllers/tokenControllers';
 
@@ -38,14 +37,14 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
   fastify.get('/reports', getReport);
   fastify.get('/reportsByNeighborhood/:NeighborhoodId', getReportByNeighborhood);
   fastify.post('/reports/register', registerReport);
-  fastify.post('/reports/:reportId/comments', registerReportComment);
+  // fastify.post('/reports/:reportId/comments', registerReportComment);
   fastify.delete('/reports/:reportId', deleteReport);
 
-  // métodos para reviews
-  fastify.get('/reviews', getReview);
-  fastify.post('/reviews/register', registerReview);
-  fastify.post('/reviews/:reviewId/comments', registerReviewComment);
-  fastify.delete('/reviews/:reviewId', deleteReview);
+  // // métodos para reviews
+  // fastify.get('/reviews', getReview);
+  // fastify.post('/reviews/register', registerReview);
+  // fastify.post('/reviews/:reviewId/comments', registerReviewComment);
+  // fastify.delete('/reviews/:reviewId', deleteReview);
 
   //métodos para emails
   fastify.post('/email/sendtoken', sendVerificationToken);
