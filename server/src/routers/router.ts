@@ -1,28 +1,31 @@
 import fp from 'fastify-plugin';
 import { type FastifyInstance, type FastifyPluginOptions } from 'fastify';
 
-import UserControllers from '../controllers/UserControllers';
-import OccurrenceControllers from '../controllers/OccurrenceController';
-
-import { sendVerificationToken, verifyToken } from '../controllers/tokenControllers';
-
-import { authenticateSession } from '../plugins/authenticate';
-
 import { UpdateUserBody, UpdateType, ExtendedUpdateBody } from '../types/userTypes';
+
+import validateFormatBody from '../middlewares/validateFormatBody';
+import validateHeaderBody from '../middlewares/validateHeaderBody';
+import validateToken from '../middlewares/validateToken';
+
+// import { authenticateSession } from '../plugins/authenticate';
+
+// import UserControllers from '../controllers/UserControllers';
+import OccurrenceControllers from '../controllers/OccurrenceController';
+// import { sendVerificationToken, verifyToken } from '../controllers/tokenControllers';
 
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
   // Conta do usuário
-  fastify.post('/auth/login', UserControllers.login);
-  fastify.post('/auth/register', UserControllers.register);
-  fastify.put<{
-    Body: ExtendedUpdateBody;
-  }>(
-    '/auth/update',
-    {
-      preHandler: authenticateSession,
-    },
-    UserControllers.update
-  );
+  // fastify.post('/auth/login', UserControllers.login);
+  // fastify.post('/auth/register', UserControllers.register);
+  // fastify.put<{
+  //   Body: ExtendedUpdateBody;
+  // }>(
+  //   '/auth/update',
+  //   {
+  //     preHandler: authenticateSession,
+  //   },
+  //   UserControllers.update
+  // );
 
   // métodos para occurrences
   fastify.get('/occurrences', OccurrenceControllers.get);
@@ -34,8 +37,8 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
   fastify.delete('/occurrences/:occurrenceId', OccurrenceControllers.delete);
 
   //métodos para emails
-  fastify.post('/email/sendtoken', sendVerificationToken);
-  fastify.post('/email/verification', verifyToken);
+  // fastify.post('/email/sendtoken', sendVerificationToken);
+  // fastify.post('/email/verification', verifyToken);
 }
 
 const userRoutersPlugin = fp(userRouters);

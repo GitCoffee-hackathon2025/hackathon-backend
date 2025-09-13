@@ -1,7 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
+import Token from './token';
 import { OccurrenceEntity } from './OccurrenceEntities';
-import { UserSessionEntity } from './TokenEntities';
+// import { UserSessionEntity } from './TokenEntities';
 
 @Entity()
 class UserEntity {
@@ -23,8 +24,11 @@ class UserEntity {
   @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.user)
   occurrences!: OccurrenceEntity[];
 
-  @OneToMany(() => UserSessionEntity, (session) => session.user)
-  sessions!: UserSessionEntity[];
+  // @OneToMany(() => UserSessionEntity, (session) => session.user)
+  // sessions!: UserSessionEntity[];
+
+  @OneToMany(() => Token, (token) => token.user)
+  tokens!: Token[];
 }
 
 export default UserEntity;
