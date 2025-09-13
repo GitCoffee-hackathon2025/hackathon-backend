@@ -1,6 +1,6 @@
 // Tipagens
 import { type DecryptedRequestData } from '../../typescript/requestBodyType';
-import { type Token } from '../../typescript/token';
+import { type TokenPayload } from '../../typescript/token';
 
 // Retorno do erro
 import FormatError from '../../errors/FormatError';
@@ -15,7 +15,7 @@ import BufferConverter from '../utils/BufferConverter';
 // Tipagens do arquivo
 type Browser = Exclude<DecryptedRequestData['browser'], null>;
 
-function compareTypeToken(typ: Token['type'], official: Token['type']): void {
+function compareTypeToken(typ: TokenPayload['type'], official: TokenPayload['type']): void {
   if (typ !== official)
     throw new FormatError(401, 'Invalid token', 'Different token type', { inputErro: ['TOKEN'] });
 }
@@ -31,7 +31,7 @@ class TokenValidations {
         });
       }
 
-      const payload = usesJwtInstance().decode(token) as Token;
+      const payload = usesJwtInstance().decode(token) as TokenPayload;
 
       if (!payload || typeof payload !== 'object') {
         throw new FormatError(
