@@ -1,13 +1,9 @@
+// Tipagens
+import { type TokenTable } from '../templates/tokenTemplates';
+
+// Banco
 import { AppDataSource } from '../db/data-source';
 import Token from '../entities/token';
-
-interface TokenWithUserId {
-  id_token: number;
-  jti: string;
-  type: string;
-  browser: string;
-  user_id: number;
-}
 
 class TokenRepository {
   private repo = AppDataSource.getRepository(Token);
@@ -17,7 +13,7 @@ class TokenRepository {
     return this.repo.save(token);
   }
 
-  public async findByJti(jti: string): Promise<TokenWithUserId | null> {
+  public async findByJti(jti: string): Promise<TokenTable | null> {
     const found = await this.repo
       .createQueryBuilder('token')
       .leftJoin('token.user', 'user')
@@ -29,7 +25,7 @@ class TokenRepository {
         'user.id_user AS user_id',
       ])
       .where('token.jti = :jti', { jti })
-      .getRawOne<TokenWithUserId>();
+      .getRawOne<TokenTable>();
 
     return found ?? null;
   }

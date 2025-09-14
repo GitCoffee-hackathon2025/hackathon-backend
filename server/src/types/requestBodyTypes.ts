@@ -21,3 +21,5 @@ export interface DecryptedRequestData {
     connect: string;
   } | null;
 }
+
+export type Browser = Exclude<DecryptedRequestData['browser'], null>;

@@ -3,9 +3,9 @@ import { type FastifyInstance, type FastifyPluginOptions } from 'fastify';
 
 import { UpdateUserBody, UpdateType, ExtendedUpdateBody } from '../types/userTypes';
 
-import validateFormatBody from '../middlewares/validateFormatBody';
-import validateHeaderBody from '../middlewares/validateHeaderBody';
-import validateToken from '../middlewares/validateToken';
+import validateFormatBody from '../middlewares/middlewareOfFormatBody';
+import validateHeaderBody from '../middlewares/middlewareOfBody';
+import validateToken from '../middlewares/middlewareOfToken';
 
 // import { authenticateSession } from '../plugins/authenticate';
 

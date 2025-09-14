@@ -18,7 +18,7 @@ class UserEntity {
   @Column({ type: 'varchar', length: 150 })
   password!: string;
 
-  @Column()
+  @Column({ type: 'date' })
   dateBirth!: Date;
 
   @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.user)
@@ -26,6 +26,9 @@ class UserEntity {
 
   // @OneToMany(() => UserSessionEntity, (session) => session.user)
   // sessions!: UserSessionEntity[];
+
+  @Column({ name: 'is_verified', type: 'boolean', default: false })
+  is_verified: boolean = false;
 
   @OneToMany(() => Token, (token) => token.user)
   tokens!: Token[];

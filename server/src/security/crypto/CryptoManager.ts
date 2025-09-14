@@ -1,5 +1,5 @@
 // Tipagens
-import { type RequestBody, type DecryptedRequestData } from '../../typescript/requestBodyType';
+import { type RequestBody, type DecryptedRequestData } from '../../types/requestBodyTypes';
 
 // Classe
 import cryptoEngine from './CryptoEngine';

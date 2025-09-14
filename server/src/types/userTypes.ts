@@ -68,8 +68,6 @@ export interface UserType {
   email: string;
   password: string;
   dateBirth: Date;
-  cep: string;
-  tel: string;
   occurrences?: OccurrenceType[];
 }
 

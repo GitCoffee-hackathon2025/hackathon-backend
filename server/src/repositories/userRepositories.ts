@@ -18,9 +18,10 @@ class UserRepository {
     await this.repo.update(id, userData);
   }
 
-  async save(user: UserEntity): Promise<void> {
-    this.repo.save(user);
+  async save(user: UserEntity): Promise<UserEntity | null> {
+    return this.repo.save(user);
   }
 }
 
-export default UserRepository;
+const userRepository = new UserRepository();
+export default userRepository;
