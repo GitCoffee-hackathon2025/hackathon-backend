@@ -1,7 +1,7 @@
 // Tipagens
 import { type FastifyInstance } from 'fastify';
 import { type DecodedJwt } from 'fast-jwt';
-import { type Kid } from '../../typescript/requestBodyType';
+import { type Kid } from '../../types/requestBodyTypes';
 
 // Configurações
 import webcrypto from '../keys/crypto.config';

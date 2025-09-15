@@ -3,7 +3,7 @@ import {
   type RequestBody,
   type DecryptedRequestData,
   type Kid,
-} from '../../typescript/requestBodyType';
+} from '../../types/requestBodyTypes';
 
 // Configurações
 import webcrypto from '../../config/keys/crypto.config';

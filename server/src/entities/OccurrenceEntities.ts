@@ -3,6 +3,18 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColum
 import UserEntity from './UserEntity';
 
 @Entity()
+export class TypeOccurrenceEntity {
+  @PrimaryGeneratedColumn()
+  id_type_occurrence!: number;
+
+  @Column({ type: 'varchar', length: 100 })
+  name_type_occurrence!: string;
+
+  @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.type)
+  occurrences!: OccurrenceEntity[];
+}
+
+@Entity()
 export class OccurrenceEntity {
   @PrimaryGeneratedColumn()
   id_occurrence!: number;
@@ -26,7 +38,7 @@ export class OccurrenceEntity {
 
   @Column({ type: Date, nullable: true })
   date_occurrence!: Date;
-  
+
   @Column()
   id_state!: number;
 
@@ -40,14 +52,3 @@ export class OccurrenceEntity {
   content_occurrence!: string;
 }
 
-@Entity()
-export class TypeOccurrenceEntity {
-  @PrimaryGeneratedColumn()
-  id_type_occurrence!: number;
-
-  @Column({ type: 'varchar', length: 100 })
-  name_type_occurrence!: string;
-
-  @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.type)
-  occurrences!: OccurrenceEntity[];
-}

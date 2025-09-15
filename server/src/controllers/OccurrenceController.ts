@@ -13,7 +13,8 @@ class OccurrenceControllers {
     request: FastifyRequest<{ Body: RequestBody }>,
     reply: FastifyReply
   ) {
-    const userId = getUserIdFromCookie(request);
+    //const userId = getUserIdFromCookie(request);
+    const userId = 1;
     if (!userId) return reply.status(401).send({ message: 'Não autorizado' });
 
     try {
