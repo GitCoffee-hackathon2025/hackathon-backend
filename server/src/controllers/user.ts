@@ -16,9 +16,9 @@ import userService from '../services/User';
 import checksFieldExistence from './utils/checksFieldExistence';
 
 class UserControllers {
-  public async register(request: FastifyRequest, reply: FastifyReply) {
+  public async register(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
     try {
-      const { decoded, aes } = await CryptoManager.decode(request.body as RequestBody);
+      const { decoded, aes } = await CryptoManager.decode(request.body);
 
       const user = decoded.data as UserRegisterValues;
 
@@ -33,9 +33,9 @@ class UserControllers {
     }
   }
 
-  public async login(request: FastifyRequest, reply: FastifyReply) {
+  public async login(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
     try {
-      const { decoded, aes } = await CryptoManager.decode(request.body as RequestBody);
+      const { decoded, aes } = await CryptoManager.decode(request.body);
 
       const user = decoded;
     } catch (error) {}
