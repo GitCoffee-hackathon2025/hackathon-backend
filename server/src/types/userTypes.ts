@@ -55,11 +55,13 @@ export interface TypeOccurrenceType {
 }
 
 export interface OccurrenceDTO {
-  id_type_occurrence: number;
+  content_occurrence: string;
+  coordenadas: string;
   id_state: number;
   id_city: number;
   id_neighborhood: number;
-  content_occurrence: string;
+
+  id_type_occurrence: number;
 }
 
 export interface UserType {
