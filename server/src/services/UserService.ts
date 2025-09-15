@@ -1,92 +1,124 @@
-// import UserRepository from '../repositories/userRepositories';
-// import {
-//   UpdateType,
-//   CreateUserDTO,
-//   UpdateUserBody,
-//   UpdateUserBodyWithPassword,
-// } from '../types/userTypes';
-// import UserEntity from '../entities/UserEntity';
-// import { CryptoUtil } from '../utils/crypto';
+// Tipagens
+import { type UserValues, type UserRegisterValues } from '../templates/userTemplates';
 
-// class UserService {
-//   private userRepo: UserRepository;
+// Retorno do erro
+import FormatError from '../errors/FormatError';
 
-//   constructor() {
-//     this.userRepo = new UserRepository();
-//   }
+// Banco
+import userRepository from '../repositories/UserRepository';
+import UserEntity from '../entities/UserEntity';
+import mailService from './sub-services/MailService';
+import authService from './AuthService';
 
-//   async login(email: string, password: string) {
-//     try {
-//       const user = await this.userRepo.findByEmail(email);
-//       let comparedPassword: boolean = false;
+// Funções
+import BcryptHashService from '../security/hashing/BcryptHashService';
+import UserValidations from '../validations/UserValidations';
+import userIsVerified from './utils/userIsVerified';
 
-//       if (user) {
-//         comparedPassword = await CryptoUtil.comparePassword(password, user.password);
-//       }
+type PartialUserRegisterValues = Omit<
+  UserRegisterValues,
+  'id_user' | 'is_verified' | 'occurrences'
+>;
 
-//       return { user, comparedPassword };
-//     } catch (error) {
-//       throw error;
-//     }
-//   }
+async function compareHashPassword(user: string, password: string) {
+  await BcryptHashService.hash(password)
+    .then(async (hash) => await BcryptHashService.compare(hash, user))
+    .then((equal) => {
+      if (!equal)
+        throw new FormatError(401, 'Senha diferente', {
+          inputErro: ['PASSWORD'],
+        });
+    });
+}
 
-//   async register(data: CreateUserDTO) {
-//     try {
-//       const user = new UserEntity();
-//       Object.assign(user, data);
+class UserService {
+  public async register(dataUser: UserRegisterValues): Promise<number> {
+    UserValidations.validName(dataUser.name);
+    UserValidations.validEmail(dataUser.email);
 
-//       if (user.password) {
-//         user.password = await CryptoUtil.hashPassword(user.password);
-//       }
+    if (await userRepository.findByEmail(dataUser.email))
+      throw new FormatError(401, 'Este email ja esta em uso', {
+        inputErro: ['EMAIL'],
+      });
 
-//       await this.userRepo.save(user);
-//       return user;
-//     } catch (error) {
-//       throw error;
-//     }
-//   }
+    UserValidations.validDateBirth(dataUser.dateBirth);
+    UserValidations.validPassword(dataUser.password);
+    UserValidations.comparePasswords(dataUser.password, dataUser.confirmPassword);
 
-//   async update(id: number, data: UpdateUserBody, type: UpdateType) {
-//     try {
-//       if (type == 'PASSWORD' && data.newPassword) {
-//         (data as UpdateUserBodyWithPassword).password = await CryptoUtil.hashPassword(
-//           data.newPassword
-//         );
-//       }
+    const User = new UserEntity();
+    Object.assign(User, {
+      name: dataUser.name,
+      email: dataUser.email,
+      password: await BcryptHashService.hash(dataUser.password),
+      dateBirth: dataUser.dateBirth,
+    });
 
-//       delete data.newPassword;
-//       delete data.confirmPassword;
+    const saved = await userRepository.save(User);
+    if (!saved) throw new FormatError(500, 'Erro na hora de cadastrar, tente mais tarde');
 
-//       await this.userRepo.update(id, data);
+    await mailService.sendMail('verification', { userId: saved['id_user'], email: saved.email });
 
-//       const updatedUser = await this.findById(id);
+    return saved['id_user'];
+  }
 
-//       return updatedUser;
-//     } catch (error) {
-//       throw error;
-//     }
-//   }
+  public async login({ email, password }: UserValues) {
+    UserValidations.validEmail(email);
 
-//   async findById(id: number) {
-//     try {
-//       const user = await this.userRepo.findById(id);
+    const user = await userRepository.findByEmail(email);
+    if (!user)
+      throw new FormatError(404, 'Este email não existe', {
+        inputErro: ['EMAIL'],
+      });
 
-//       return user;
-//     } catch (error) {
-//       throw error;
-//     }
-//   }
+    await userIsVerified(user);
+    UserValidations.validPassword(password);
 
-//   async findByEmail(email: string) {
-//     try {
-//       const user = await this.userRepo.findByEmail(email);
+    await compareHashPassword(user.password, password);
 
-//       return user;
-//     } catch (error) {
-//       throw error;
-//     }
-//   }
-// }
+    const { id_user: id, name, email: emailUser, dateBirth } = user;
+    return { id, name, email: emailUser, dateBirth };
+  }
 
-// const userService = new UserService();
-// export default userService;
+  public async update(id: number, dataUser: PartialUserRegisterValues, randomReceived?: number) {
+    const user = await userRepository.findById(id);
+    if (!user) throw new FormatError(404, 'Essa conta não existe');
+    userIsVerified(user);
+
+    try {
+      if (randomReceived) {
+        if (dataUser.password) {
+          await mailService.checkEmail('password', id, randomReceived);
+          UserValidations.validPassword(dataUser.password);
+          UserValidations.comparePasswords(dataUser.password, dataUser.confirmPassword!);
+
+          const hashPassword = await BcryptHashService.hash(dataUser.password);
+          await userRepository.update(id, { password: hashPassword });
+        } else if (dataUser.email) {
+          await mailService.checkEmail('email', id, randomReceived);
+          UserValidations.validEmail(dataUser.email);
+          await userRepository.update(id, { email: dataUser.email });
+        }
+        if ((await authService.deleteAll(id)) && !(await mailService.deleteEmailsOfUser(id)))
+          throw new FormatError(500, 'Erro ao limpar acessos a conta');
+      } else {
+        (Object.keys(dataUser) as (keyof PartialUserRegisterValues)[]).forEach((field) => {
+          if (field === 'name') UserValidations.validName(dataUser[field]);
+          if (field === 'dateBirth') UserValidations.validDateBirth(dataUser[field]);
+          else throw new FormatError(400, 'Dados que não existem no usuário');
+        });
+
+        await userRepository.update(id, dataUser);
+
+        const saved = await userRepository.findById(id);
+        if (!saved) throw new FormatError(500, 'Falha de conexão');
+        return { name: saved.name, email: saved.email, dateBirth: saved.dateBirth };
+      }
+    } catch (error) {
+      if (error instanceof FormatError) throw error;
+      throw new FormatError(500, 'Erro em atualizar usuário');
+    }
+  }
+}
+
+const userService = new UserService();
+export default userService;

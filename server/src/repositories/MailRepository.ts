@@ -30,6 +30,14 @@ class VerificationRepository {
   public async delete(id: number): Promise<boolean> {
     return ((await this.repo.delete(id)).affected ?? 0) > 0;
   }
+
+  public async deleteAllByUserId(userId: number): Promise<boolean> {
+    return (
+      ((
+        await this.repo.createQueryBuilder().delete().where('id_user = :v', { v: userId }).execute()
+      ).affected ?? 0) > 0
+    );
+  }
 }
 
 export default VerificationRepository;

@@ -3,24 +3,32 @@ import occurrenceService from '../services/OccurrenceService';
 import { OccurrenceDTO } from '../types/userTypes';
 
 import getUserIdFromCookie from './getUserIdFromCookie';
-
+import CryptoManager from '../security/crypto/CryptoManager';
 // Retorno do erro
 import SendError from './../errors/SendError';
+import { RequestBody } from '../types/requestBodyTypes';
 
 class OccurrenceControllers {
   public static async register(
-    request: FastifyRequest<{ Body: OccurrenceDTO }>,
+    request: FastifyRequest<{ Body: RequestBody }>,
     reply: FastifyReply
   ) {
-    const userId = getUserIdFromCookie(request);
+    //const userId = getUserIdFromCookie(request);
+    const userId = 1;
     if (!userId) return reply.status(401).send({ message: 'Não autorizado' });
 
     try {
-      const occurrence = await occurrenceService.register(userId, request.body);
+      const { decoded, aes } = await CryptoManager.decode(request.body);
+
+      const occurrenceData = decoded.data as OccurrenceDTO;
+
+      // Chama o service
+      const occurrence = await occurrenceService.register(userId, occurrenceData);
+     
       if (!occurrence) {
         return reply.status(404).send({ message: 'Relatório não encontrado' });
       }
-      return reply.status(201).send({
+      return reply.status(201).send(await CryptoManager.encode({
         success: true,
         message: 'Relatório registrado com sucesso',
         data: {
@@ -28,8 +36,9 @@ class OccurrenceControllers {
           content: occurrence.content_occurrence,
           coordenadas: occurrence.coordenadas,
           created_at: occurrence.created_at,
+          date_occurrence: occurrence.date_occurrence,
         },
-      });
+      }, aes));
     } catch (error) {
       return reply.status(400).send({
         success: false,
@@ -39,11 +48,12 @@ class OccurrenceControllers {
   }
 
   public static async get(
-    request: FastifyRequest<{ Params: { id: number } }>,
+    request: FastifyRequest<{ Params: { id: number }}>,
     reply: FastifyReply
   ) {
     try {
       const occurrence = await occurrenceService.findById(Number(request.params.id));
+
       if (!occurrence) return reply.status(404).send({ message: 'Relatório não encontrado' });
 
       return reply.send({

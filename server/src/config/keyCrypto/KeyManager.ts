@@ -1,5 +1,5 @@
 // Tipagens
-import { type Kid } from '../../typescript/requestBodyType';
+import { type Kid } from '../../types/requestBodyTypes';
 
 // Configurações
 import webcrypto from '../keys/crypto.config';

@@ -74,6 +74,10 @@ class MailService {
     if (!(await this.repo.delete(mail.id_mail)))
       throw new FormatError(500, 'Falha ao finalizar e-mail, tente mais tarde');
   }
+
+  public async deleteEmailsOfUser(userId: number): Promise<boolean> {
+    return this.repo.deleteAllByUserId(userId);
+  }
 }
 
 const mailService = new MailService();

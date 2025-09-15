@@ -12,7 +12,7 @@ import FormatError from '../errors/FormatError';
 import CryptoManager from '../security/crypto/CryptoManager';
 
 // Funções
-import userService from '../services/User';
+import userService from '../services/UserService';
 import checksFieldExistence from './utils/checksFieldExistence';
 
 class UserControllers {

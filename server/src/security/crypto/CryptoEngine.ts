@@ -1,9 +1,5 @@
 // Tipagens
-import {
-  type RequestBody,
-  type DecryptedRequestData,
-  type Kid,
-} from '../../typescript/requestBodyType';
+import { type RequestBody, DecryptedRequestData, Kid } from '../../types/requestBodyTypes';
 
 // Configurações
 import webcrypto from '../../config/keys/crypto.config';

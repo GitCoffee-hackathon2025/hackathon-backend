@@ -15,7 +15,7 @@ class UserRepository {
   }
 
   async update(id: number, userData: Partial<UserEntity>): Promise<void> {
-    await this.repo.update(id, userData);
+    this.repo.update(id, userData);
   }
 
   async save(user: UserEntity): Promise<UserEntity | null> {
