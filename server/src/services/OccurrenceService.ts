@@ -1,5 +1,5 @@
-import OccurrenceRepository from '../repositories/occurrencesRepositories';
-import userRepository from '../repositories/userRepositories';
+import OccurrenceRepository from '../repositories/OccurrencesRepository';
+import userRepository from '../repositories/UserRepository';
 import { OccurrenceEntity } from '../entities/OccurrenceEntities';
 import { OccurrenceDTO } from '../types/userTypes';
 

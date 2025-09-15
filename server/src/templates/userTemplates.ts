@@ -21,3 +21,7 @@ export interface UserValues {
   is_verified: boolean;
   occurrences?: OccurrenceType[];
 }
+
+export interface UserRegisterValues extends UserValues {
+  confirmPassword: string;
+}

@@ -3,22 +3,22 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 't
 import UserEntity from './UserEntity';
 
 @Entity()
-class TokenEntity {
+class MailEntity {
   @PrimaryGeneratedColumn()
-  id_verification!: number;
+  id_mail!: number;
 
   @ManyToOne(() => UserEntity, (user) => user.tokens)
   @JoinColumn({ name: 'id_user' })
   user!: UserEntity;
 
-  @Column({ name: 'type_verification', type: 'varchar', length: 10 })
+  @Column({ name: 'type_mail', type: 'varchar', length: 10 })
   type!: string;
 
-  @Column({ name: 'random_verification', type: 'char', length: 6 })
+  @Column({ name: 'random_mail', type: 'varchar', length: 50 })
   random!: string;
 
   @Column({ name: 'expires_at', type: 'timestamp' })
   expires_at!: Date;
 }
 
-export default TokenEntity;
+export default MailEntity;

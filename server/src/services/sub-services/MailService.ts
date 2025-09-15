@@ -1,0 +1,80 @@
+// Tipagens
+// import { type VerificationValues } from '../templates/verificationTemplates';
+
+// Configurações
+import mailsConf from '../../config/keys/mails.config';
+
+// Banco
+import MailEntity from '../../entities/MailEntity';
+import MailRepository from '../../repositories/MailRepository';
+
+// Retorno de erro
+import FormatError from '../../errors/FormatError';
+
+// Funções
+import { sendMail } from '../../email/transporter';
+import BcryptHashService from '../../security/hashing/BcryptHashService';
+import generateRandomNumber from '../../security/generateRandomNumber';
+
+type TypeMail = keyof typeof mailsConf;
+
+function chooseSubject(name: (typeof mailsConf)[TypeMail]['name']) {
+  if (name === 'VERIFICATION') return 'Verificação de e-mail';
+  if (name === 'PASSWORD_RESET') return 'Recuperação de conta (mudar senha)';
+  if (name === 'CHANCE_EMAIL') return 'Verificação para mudança de e-mail';
+  throw new FormatError(500, 'Erro com o tipo de email');
+}
+
+class MailService {
+  private repo = new MailRepository();
+
+  public async sendMail(
+    type: TypeMail,
+    { userId, email }: { userId: number; email: string }
+  ): Promise<void> {
+    if (await this.repo.findByUserIdAndType(userId, mailsConf.verification.name))
+      throw new FormatError(404, 'Já foi enviado um e-mail para essa conta');
+
+    const random = generateRandomNumber();
+
+    const Mail = new MailEntity();
+    Object.assign(Mail, {
+      user_id: userId,
+      type: mailsConf[type].name,
+      random: await BcryptHashService.hash(String(random)),
+    });
+
+    const saved = await this.repo.save(Mail, mailsConf[type].expiresIn);
+    if (!saved) throw new FormatError(500, 'Falha ao salvar email, tente mais tarte');
+
+    // No futuro melhorar esse email
+    try {
+      await sendMail(email, {
+        subject: chooseSubject(mailsConf[type].name),
+        text: `Seu código é: ${random}`,
+        html: `<p>Seu código é: <b>${random}</b></p>`,
+      });
+    } catch (error) {
+      if (!(await this.repo.delete(saved.id_mail)))
+        throw new FormatError(500, 'Erro crítico no servidor, tente daqui pelo menos 15 minutos');
+      throw new FormatError(500, 'Falha ao enviar e-mail, tente novamente');
+    }
+  }
+
+  public async checkEmail(type: TypeMail, userId: number, randomReceived: number): Promise<void> {
+    const mail = await this.repo.findByUserIdAndType(userId, mailsConf[type].name);
+    if (!mail) throw new FormatError(404, 'Não foi enviado email para essa conta');
+
+    await BcryptHashService.hash(String(randomReceived))
+      .then(async (hash) => await BcryptHashService.compare(hash, mail.random))
+      .then((equal) => {
+        if (!equal) throw new FormatError(401, 'Código inválido');
+      });
+
+    if (!(await this.repo.delete(mail.id_mail)))
+      throw new FormatError(500, 'Falha ao finalizar e-mail, tente mais tarde');
+  }
+}
+
+const mailService = new MailService();
+export default mailService;

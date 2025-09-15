@@ -2,7 +2,7 @@
 import { type FastifyRequest, type FastifyReply } from 'fastify';
 import { type RequestBody } from '../types/requestBodyTypes';
 
-import { userTemplate, type UserValues } from '../templates/userTemplates';
+import { userTemplate, type UserValues, type UserRegisterValues } from '../templates/userTemplates';
 
 // Retorno do erro
 import SendError from './../errors/SendError';
@@ -12,7 +12,7 @@ import FormatError from '../errors/FormatError';
 import CryptoManager from '../security/crypto/CryptoManager';
 
 // Funções
-import userService from '../service/user';
+import userService from '../services/User';
 import checksFieldExistence from './utils/checksFieldExistence';
 
 class UserControllers {
@@ -20,7 +20,7 @@ class UserControllers {
     try {
       const { decoded, aes } = await CryptoManager.decode(request.body as RequestBody);
 
-      const user = decoded.data as UserValues;
+      const user = decoded.data as UserRegisterValues;
 
       checksFieldExistence(user, userTemplate);
       await userService.register(user);

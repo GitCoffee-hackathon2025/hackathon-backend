@@ -27,12 +27,6 @@ async function hashBrowserConnect(connect: string): Promise<string> {
 class TokenManager {
   private validations = new TokenValidations();
 
-  public generateRandomNumber() {
-    const array = new Uint32Array(1);
-    crypto.getRandomValues(array);
-    return 100000 + (array[0] % (999999 - 100000 + 1));
-  }
-
   private createToken(
     options: { name: Uppercase<string>; expiresIn: number },
     payload: { id: number; bh: string; akid?: string; vCode?: number }

@@ -1,5 +1,5 @@
 import { type FastifyRequest, type FastifyReply } from 'fastify';
-import occurrenceService from '../service/OccurrenceService';
+import occurrenceService from '../services/OccurrenceService';
 import { OccurrenceDTO } from '../types/userTypes';
 
 import getUserIdFromCookie from './getUserIdFromCookie';
