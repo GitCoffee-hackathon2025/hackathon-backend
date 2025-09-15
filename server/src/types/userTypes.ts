@@ -57,10 +57,10 @@ export interface TypeOccurrenceType {
 export interface OccurrenceDTO {
   content_occurrence: string;
   coordenadas: string;
+  date_occurrence: Date;
   id_state: number;
   id_city: number;
   id_neighborhood: number;
-
   id_type_occurrence: number;
 }
 

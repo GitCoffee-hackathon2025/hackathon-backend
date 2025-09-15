@@ -24,6 +24,9 @@ export class OccurrenceEntity {
   @Column({ type: 'text' })
   coordenadas!: string;
 
+  @Column({ type: Date, nullable: true })
+  date_occurrence!: Date;
+  
   @Column()
   id_state!: number;
 

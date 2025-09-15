@@ -35,6 +35,7 @@ class OccurrenceControllers {
           content: occurrence.content_occurrence,
           coordenadas: occurrence.coordenadas,
           created_at: occurrence.created_at,
+          date_occurrence: occurrence.date_occurrence,
         },
       }, aes));
     } catch (error) {
