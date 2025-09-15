@@ -46,12 +46,12 @@ class OccurrenceControllers {
   }
 
   public static async get(
-    request: FastifyRequest<{ Params: { id: number }, Body: RequestBody }>,
+    request: FastifyRequest<{ Params: { id: number }}>,
     reply: FastifyReply
   ) {
     try {
       const occurrence = await occurrenceService.findById(Number(request.params.id));
-      const { decoded, aes } = await CryptoManager.decode(request.body);
+ 
 
 
       if (!occurrence) return reply.status(404).send({ message: 'Relatório não encontrado' });
