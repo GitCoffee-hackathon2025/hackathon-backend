@@ -1,44 +1,44 @@
 import fp from 'fastify-plugin';
 import { type FastifyInstance, type FastifyPluginOptions } from 'fastify';
+import { type RequestBody } from '../types/requestBodyTypes';
 
-import { UpdateUserBody, UpdateType, ExtendedUpdateBody } from '../types/userTypes';
+import validateOfFormatBody from '../middlewares/validateOfFormatBody';
+import validateOfHeaderBody from '../middlewares/validateOfBody';
+import validateOfToken from '../middlewares/validateOfToken';
 
-import validateFormatBody from '../middlewares/middlewareOfFormatBody';
-import validateHeaderBody from '../middlewares/middlewareOfBody';
-import validateToken from '../middlewares/middlewareOfToken';
+import PublicKeyController from '../controllers/CryptoController';
+import UserControllers from '../controllers/UserController';
+import OccurrenceController from '../controllers/OccurrenceController';
+import AuthController from '../controllers/AuthController';
 
-// import { authenticateSession } from '../plugins/authenticate';
+const validates = [validateOfFormatBody, validateOfHeaderBody];
 
-// import UserControllers from '../controllers/UserControllers';
-import OccurrenceControllers from '../controllers/OccurrenceController';
-// import { sendVerificationToken, verifyToken } from '../controllers/tokenControllers';
+function useValidates(auth: boolean = false) {
+  return { preHandler: auth ? [...validates, validateOfToken] : validates };
+}
 
 async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
-  // Conta do usuário
-  // fastify.post('/auth/login', UserControllers.login);
-  // fastify.post('/auth/register', UserControllers.register);
-  // fastify.put<{
-  //   Body: ExtendedUpdateBody;
-  // }>(
-  //   '/auth/update',
-  //   {
-  //     preHandler: authenticateSession,
-  //   },
-  //   UserControllers.update
-  // );
+  // Public key
+  fastify.get('/connect/get', PublicKeyController);
 
-  // métodos para occurrences
-  fastify.get('/occurrences', OccurrenceControllers.get);
-  fastify.get(
-    '/occurrencesByNeighborhood/:NeighborhoodId',
-    OccurrenceControllers.getByNeighborhood
-  );
-  fastify.post('/occurrences/register', OccurrenceControllers.register);
-  fastify.delete('/occurrences/:occurrenceId', OccurrenceControllers.delete);
+  // User
+  fastify.post('/auth', useValidates(true), UserControllers.get);
+  fastify.post('/auth/register', useValidates(), UserControllers.register);
+  fastify.put('/auth', useValidates(true), UserControllers.update);
 
-  //métodos para emails
-  // fastify.post('/email/sendtoken', sendVerificationToken);
-  // fastify.post('/email/verification', verifyToken);
+  // Tokens
+  fastify.post('/auth/tokens', useValidates(), AuthController.login);
+  fastify.put('/auth/tokens', useValidates(true), AuthController.recover);
+
+  // Mails
+  fastify.post('/auth/mail/email', useValidates(true), AuthController.sendMailChangeEmail);
+  fastify.post('/auth/mail/password', useValidates(true), AuthController.sendMailPassword);
+
+  // Occurrences
+  fastify.post('/occurrences/register', useValidates(true), OccurrenceController.register);
+  fastify.get('/occurrences', OccurrenceController.get);
+  fastify.get('/occurrences/neighborhood', OccurrenceController.getByNeighborhood);
+  fastify.delete('/occurrences', useValidates(true), OccurrenceController.delete);
 }
 
 const userRoutersPlugin = fp(userRouters);

@@ -46,10 +46,6 @@ class UserValidations {
       });
     }
   }
-
-  // public static isVerified(verified: boolean) {
-  //   if (!verified) throw new FormatError(409, 'A conta ainda não foi verificada, acesse seu email');
-  // }
 }
 
 export default UserValidations;

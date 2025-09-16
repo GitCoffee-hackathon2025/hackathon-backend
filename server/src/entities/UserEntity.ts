@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
-import Token from './token';
+import Token from './TokenEntity';
 import { OccurrenceEntity } from './OccurrenceEntities';
 // import { UserSessionEntity } from './TokenEntities';
 

@@ -3,7 +3,7 @@ import { type TokenTable } from '../templates/tokenTemplates';
 
 // Banco
 import { AppDataSource } from '../db/data-source';
-import Token from '../entities/token';
+import Token from '../entities/TokenEntity';
 
 class TokenRepository {
   private repo = AppDataSource.getRepository(Token);

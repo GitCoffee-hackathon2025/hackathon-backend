@@ -15,14 +15,6 @@ import BufferConverter from '../utils/BufferConverter';
 // Tipagens do arquivo
 type Browser = Exclude<DecryptedRequestData['browser'], null>;
 
-function compareTypeToken(typ: TokenPayload['type'], official: TokenPayload['type']): void {
-  if (typ !== official)
-    throw new FormatError(401, 'Invalid token', {
-      message: 'Different token type',
-      inputErro: ['TOKEN'],
-    });
-}
-
 class TokenValidations {
   public async validateToken(token: string, browser: Browser): Promise<void> {
     try {

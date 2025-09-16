@@ -33,7 +33,7 @@ export class OccurrenceEntity {
   @Column({ type: 'timestamp', nullable: true })
   updated_at!: Date;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'json' })
   coordenadas!: string;
 
   @Column({ type: Date, nullable: true })

@@ -1,9 +1,9 @@
 import { DataSource } from 'typeorm';
 
 import UserEntity from '../entities/UserEntity';
-import Token from '../entities/token';
+import TokenEntity from '../entities/TokenEntity';
+import MailEntity from '../entities/MailEntity';
 import { OccurrenceEntity, TypeOccurrenceEntity } from '../entities/OccurrenceEntities';
-// import { TokenEntity, VerificationTokenEntity } from '../entities/TokenEntities';
 
 import 'dotenv/config';
 
@@ -18,7 +18,8 @@ export const AppDataSource = new DataSource({
   logging: true,
   entities: [
     UserEntity,
-    Token,
+    TokenEntity,
+    MailEntity,
     OccurrenceEntity,
     TypeOccurrenceEntity,
     // TokenEntity,

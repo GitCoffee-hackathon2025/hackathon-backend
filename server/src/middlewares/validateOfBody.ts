@@ -1,6 +1,6 @@
 // Tipagens
 import { type FastifyRequest, type FastifyReply } from 'fastify';
-import { type RequestBody } from '../typescript/requestBodyType';
+import { type RequestBody } from '../types/requestBodyTypes';
 
 // Configurações
 import webcrypto from '../config/keys/crypto.config';
@@ -8,8 +8,8 @@ import webcrypto from '../config/keys/crypto.config';
 // Funções
 import { getVersionKey } from '../config/keyCrypto/KeyManager';
 
-function middlewareOfHeaderBody(request: FastifyRequest, reply: FastifyReply) {
-  const header = (request.body as RequestBody).header;
+function validateOfHeaderBody(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
+  const header = request.body.header;
   if (!Object.values(getVersionKey()).includes(header.rsa.kid))
     return reply.status(400).send({ message: 'Invalid kid' });
 
@@ -20,4 +20,4 @@ function middlewareOfHeaderBody(request: FastifyRequest, reply: FastifyReply) {
     return reply.status(400).send({ message: 'Invalid encryption' });
 }
 
-export default middlewareOfHeaderBody;
+export default validateOfHeaderBody;

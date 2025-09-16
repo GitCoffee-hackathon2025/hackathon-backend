@@ -3,6 +3,8 @@ import userRepository from '../repositories/UserRepository';
 import { OccurrenceEntity } from '../entities/OccurrenceEntities';
 import { OccurrenceDTO } from '../types/userTypes';
 
+import OccurrenceValidations from '../validations/OccurrenceValidations';
+
 // Retorno do erro
 import FormatError from '../errors/FormatError';
 
@@ -16,6 +18,9 @@ class OccurrenceService {
   async register(userId: number, dataOccurrence: OccurrenceDTO) {
     const user = await userRepository.findById(userId);
     if (!user) throw new FormatError(404, 'Usuário não encontrado');
+
+    OccurrenceValidations.validDate(dataOccurrence['date_occurrence']);
+    OccurrenceValidations.validContent(dataOccurrence['content_occurrence']);
 
     const typeOccurrence = await this.occurrenceRepo.findTypeById(
       dataOccurrence.id_type_occurrence

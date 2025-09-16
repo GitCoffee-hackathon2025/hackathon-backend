@@ -6,14 +6,14 @@ import { type TokenTable, type TokenPayload } from '../templates/tokenTemplates'
 import tokensConf from '../config/keys/tokens.config';
 
 // Banco
-import TokenEntity from '../entities/token';
+import TokenEntity from '../entities/TokenEntity';
 import TokenRepository from '../repositories/TokenRepository';
 
 // Retorno de erro
 import FormatError from '../errors/FormatError';
 
 // Funções
-import TokenManager from '../security/tokens/newTokenManager';
+import TokenManager from '../security/tokens/TokenManager';
 
 class AuthService {
   private repo = new TokenRepository();
@@ -83,8 +83,11 @@ class AuthService {
       const stored = await this.repo.findByJti(token.jti);
 
       this.validateToken(tokensConf.refresh.name, token, stored);
+      const userId = stored!['user_id'];
 
-      return this.issueTokens(stored!['user_id'], browser);
+      await this.repo.deleteAllByUserId(userId);
+
+      return this.issueTokens(userId, browser);
     } catch (error) {
       if (error instanceof FormatError) throw error;
       throw new FormatError(500, 'Erro ao re-autenticar usuário');

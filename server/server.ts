@@ -21,8 +21,8 @@ fastify.register(fastifyCookie);
 fastify.register(userRoutersPlugin);
 const start = async () => {
   try {
-    await KeyBootstrap.init(fastify);
     await AppDataSource.initialize();
+    await KeyBootstrap.init(fastify);
     await fastify.listen({ port: 3000 });
   } catch (err) {
     fastify.log.error(err);

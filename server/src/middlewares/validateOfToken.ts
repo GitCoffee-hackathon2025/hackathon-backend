@@ -1,9 +1,10 @@
 // Tipagens
 import { type FastifyRequest, type FastifyReply } from 'fastify';
+import { type RequestBody } from '../types/requestBodyTypes';
 
 const inputErro = ['TOKEN'];
 
-function middlewareOfToken(request: FastifyRequest, reply: FastifyReply) {
+function validateOfToken(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
   const authorization = request.headers.authorization;
   if (!authorization)
     return reply.status(401).send({
@@ -30,4 +31,4 @@ function middlewareOfToken(request: FastifyRequest, reply: FastifyReply) {
     });
 }
 
-export default middlewareOfToken;
+export default validateOfToken;

@@ -25,3 +25,8 @@ export interface UserValues {
 export interface UserRegisterValues extends UserValues {
   confirmPassword: string;
 }
+
+export type PartialUserRegisterValues = Omit<
+  UserRegisterValues,
+  'id_user' | 'is_verified' | 'occurrences'
+>;

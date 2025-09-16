@@ -1,5 +1,9 @@
 // Tipagens
-import { type UserValues, type UserRegisterValues } from '../templates/userTemplates';
+import {
+  type UserValues,
+  type UserRegisterValues,
+  type PartialUserRegisterValues,
+} from '../templates/userTemplates';
 
 // Retorno do erro
 import FormatError from '../errors/FormatError';
@@ -14,11 +18,6 @@ import authService from './AuthService';
 import BcryptHashService from '../security/hashing/BcryptHashService';
 import UserValidations from '../validations/UserValidations';
 import userIsVerified from './utils/userIsVerified';
-
-type PartialUserRegisterValues = Omit<
-  UserRegisterValues,
-  'id_user' | 'is_verified' | 'occurrences'
->;
 
 async function compareHashPassword(user: string, password: string) {
   await BcryptHashService.hash(password)
@@ -61,7 +60,7 @@ class UserService {
     return saved['id_user'];
   }
 
-  public async login({ email, password }: UserValues) {
+  public async login({ email, password }: Pick<UserValues, 'email' | 'password'>) {
     UserValidations.validEmail(email);
 
     const user = await userRepository.findByEmail(email);
@@ -79,26 +78,47 @@ class UserService {
     return { id, name, email: emailUser, dateBirth };
   }
 
-  public async update(id: number, dataUser: PartialUserRegisterValues, randomReceived?: number) {
-    const user = await userRepository.findById(id);
+  public async getUser(userId: number) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw new FormatError(404, 'Usuário não encontrado');
+    return { name: user.name, email: user.email, dateBirth: user.dateBirth };
+  }
+
+  public async sendCodeToChange(userId: number, type: 'password' | 'email') {
+    const user = await userRepository.findById(userId);
+    if (!user) throw new FormatError(404, 'Essa conta não existe');
+    userIsVerified(user);
+
+    await mailService.sendMail(type, { userId, email: user.email });
+  }
+
+  public async update(
+    userId: number,
+    dataUser: PartialUserRegisterValues,
+    randomReceived?: number
+  ) {
+    const user = await userRepository.findById(userId);
     if (!user) throw new FormatError(404, 'Essa conta não existe');
     userIsVerified(user);
 
     try {
       if (randomReceived) {
         if (dataUser.password) {
-          await mailService.checkEmail('password', id, randomReceived);
+          await mailService.checkEmail('password', userId, randomReceived);
           UserValidations.validPassword(dataUser.password);
           UserValidations.comparePasswords(dataUser.password, dataUser.confirmPassword!);
 
           const hashPassword = await BcryptHashService.hash(dataUser.password);
-          await userRepository.update(id, { password: hashPassword });
+          await userRepository.update(userId, { password: hashPassword });
         } else if (dataUser.email) {
-          await mailService.checkEmail('email', id, randomReceived);
+          await mailService.checkEmail('email', userId, randomReceived);
           UserValidations.validEmail(dataUser.email);
-          await userRepository.update(id, { email: dataUser.email });
+          await userRepository.update(userId, { email: dataUser.email });
         }
-        if ((await authService.deleteAll(id)) && !(await mailService.deleteEmailsOfUser(id)))
+        if (
+          (await authService.deleteAll(userId)) &&
+          !(await mailService.deleteEmailsOfUser(userId))
+        )
           throw new FormatError(500, 'Erro ao limpar acessos a conta');
       } else {
         (Object.keys(dataUser) as (keyof PartialUserRegisterValues)[]).forEach((field) => {
@@ -107,12 +127,12 @@ class UserService {
           else throw new FormatError(400, 'Dados que não existem no usuário');
         });
 
-        await userRepository.update(id, dataUser);
-
-        const saved = await userRepository.findById(id);
-        if (!saved) throw new FormatError(500, 'Falha de conexão');
-        return { name: saved.name, email: saved.email, dateBirth: saved.dateBirth };
+        await userRepository.update(userId, dataUser);
       }
+      const saved = await userRepository.findById(userId);
+      if (!saved) throw new FormatError(500, 'Falha de conexão');
+
+      return { name: saved.name, email: saved.email, dateBirth: saved.dateBirth };
     } catch (error) {
       if (error instanceof FormatError) throw error;
       throw new FormatError(500, 'Erro em atualizar usuário');
