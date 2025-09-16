@@ -73,6 +73,26 @@ class OccurrenceControllers {
     }
   }
 
+  public static async getAllOccurrencesCoordenades(
+   request: FastifyRequest,
+   reply: FastifyReply
+ ) {
+   try {
+     const occurrences = await occurrenceService.getAllOccurrencesCoordenades();
+     if (!occurrences) return reply.status(404).send({ message: 'Não foi encontrado ocorrências' });
+
+
+     return reply.send({
+       success: true,
+       count: occurrences.length,
+       data: occurrences,
+     });
+   } catch (error) {
+     SendError(error, reply);
+   }
+ }
+
+
   public static async get(
     request: FastifyRequest<{ Params: { id: number }}>,
     reply: FastifyReply

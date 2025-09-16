@@ -29,6 +29,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
   // );
 
   // métodos para occurrences
+  fastify.get('/occurrences/coordenates', OccurrenceControllers.getAllOccurrencesCoordenades);
   fastify.get('/connect/get', PublicKeyController);
   fastify.get('/occurrences', OccurrenceControllers.get);
   fastify.get(

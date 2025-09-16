@@ -36,6 +36,20 @@ class OccurrenceService {
     return saved;
   }
 
+
+ async getAllOccurrencesCoordenades() {
+   const occurrences = await this.occurrenceRepo.getAllOccurrences();
+   if (!occurrences) throw new FormatError(404, 'Não foi encontrado ocorrências');
+   const occurrencesCoordenades = occurrences.map((occurrence) => ({
+     id_occurrence: occurrence.id_occurrence,
+     coordenadas: occurrence.coordenadas,
+   }));
+   return occurrencesCoordenades;
+
+
+ }
+ 
+
   async findById(id: number) {
     return this.occurrenceRepo.findById(id);
   }

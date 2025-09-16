@@ -30,6 +30,11 @@ class OccurrenceRepository {
     });
   }
 
+  async getAllOccurrences(): Promise<OccurrenceEntity[]> {
+   return await this.repo.find();
+ }
+
+
   async findByNeighborhood(id: number, limit: number = 3): Promise<OccurrenceEntity[]> {
     return this.repo
       .createQueryBuilder('occurrence')
