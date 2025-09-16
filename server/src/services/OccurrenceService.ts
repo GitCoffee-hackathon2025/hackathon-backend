@@ -28,7 +28,6 @@ class OccurrenceService {
     occurrence.coordenadas = dataOccurrence.coordenadas;
     occurrence.content_occurrence = dataOccurrence.content_occurrence;
     occurrence.date_occurrence = dataOccurrence.date_occurrence;
-   
     occurrence.id_neighborhood = dataOccurrence.id_neighborhood;
     occurrence.user = user;
 
@@ -37,18 +36,22 @@ class OccurrenceService {
   }
 
 
- async getAllOccurrencesCoordenades() {
-   const occurrences = await this.occurrenceRepo.getAllOccurrences();
-   if (!occurrences) throw new FormatError(404, 'Não foi encontrado ocorrências');
-   const occurrencesCoordenades = occurrences.map((occurrence) => ({
-     id_occurrence: occurrence.id_occurrence,
-     coordenadas: occurrence.coordenadas,
-   }));
-   return occurrencesCoordenades;
+async getAllOccurrencesCoordenades() {
+  const occurrences = await this.occurrenceRepo.getAllOccurrences();
 
+  if (!occurrences || occurrences.length === 0) {
+    throw new FormatError(404, 'Não foram encontradas ocorrências');
+  }
 
- }
- 
+  const occurrencesCoordenades = occurrences.map((occurrence) => ({
+    id_occurrence: occurrence.id_occurrence,
+    coordenadas: occurrence.coordenadas,
+    type: occurrence.type?.name_type_occurrence, // pega o nome do tipo
+  }));
+
+  return occurrencesCoordenades;
+}
+
 
   async findById(id: number) {
     return this.occurrenceRepo.findById(id);
