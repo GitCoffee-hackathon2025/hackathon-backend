@@ -38,8 +38,8 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 150 })
   password!: string;
 
-  @Column()
-  dateBirth!: Date;
+  @Column({ type: 'date', nullable: true })
+  dateBirth?: Date | null;
 
   @OneToMany(() => ReportEntity, (report) => report.user)
   reports!: ReportEntity[];

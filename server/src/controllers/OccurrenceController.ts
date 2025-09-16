@@ -9,26 +9,47 @@ import SendError from './../errors/SendError';
 import { RequestBody } from '../types/requestBodyTypes';
 
 class OccurrenceControllers {
-  public static async register(
-    request: FastifyRequest<{ Body: RequestBody }>,
-    reply: FastifyReply
+   public static async register(
+    request: any,
+    reply: any
   ) {
-    //const userId = getUserIdFromCookie(request);
-    const userId = 1;
-    if (!userId) return reply.status(401).send({ message: 'Não autorizado' });
+    console.log('=== Chegou requisição no backend ===');
+    console.log('Body recebido:', request.body);
+
+    const userId = 1; // simulando cookie
+    if (!userId) {
+      console.warn('Usuário não autorizado');
+      return reply.status(401).send({ message: 'Não autorizado' });
+    }
 
     try {
-      const { decoded, aes } = await CryptoManager.decode(request.body);
+      console.log('Tentando decodificar o body com CryptoManager...');
+      let decoded, aes;
+      try {
+        ({ decoded, aes } = await CryptoManager.decode(request.body));
+        console.log('Decode OK:', decoded);
+      } catch (decodeErr) {
+        console.error('Falha no decode:', decodeErr);
+        return reply.status(400).send({
+          success: false,
+          message: decodeErr instanceof Error ? decodeErr.message : 'Erro desconhecido no decode',
+        });
+      }
 
       const occurrenceData = decoded.data as OccurrenceDTO;
+      console.log('Dados da ocorrência decodificados:', occurrenceData);
 
-      // Chama o service
+      console.log('Chamando occurrenceService.register...');
       const occurrence = await occurrenceService.register(userId, occurrenceData);
-     
+      console.log('Occurrence registrada:', occurrence);
+
       if (!occurrence) {
+        console.warn('Relatório não encontrado após salvar');
         return reply.status(404).send({ message: 'Relatório não encontrado' });
       }
-      return reply.status(201).send(await CryptoManager.encode({
+
+      console.log('Codificando resposta com CryptoManager...');
+      const encodedResponse = await CryptoManager.encode({
         success: true,
         message: 'Relatório registrado com sucesso',
         data: {
@@ -38,8 +59,13 @@ class OccurrenceControllers {
           created_at: occurrence.created_at,
           date_occurrence: occurrence.date_occurrence,
         },
-      }, aes));
+      }, aes);
+
+      console.log('Resposta codificada pronta para envio:', encodedResponse);
+
+      return reply.status(201).send(encodedResponse);
     } catch (error) {
+      console.error('Erro inesperado no register:', error);
       return reply.status(400).send({
         success: false,
         message: error instanceof Error ? error.message : 'Erro desconhecido',

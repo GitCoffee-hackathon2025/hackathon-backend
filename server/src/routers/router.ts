@@ -1,3 +1,4 @@
+import PublicKeyController from '../controllers/security/CryptoController';
 import fp from 'fastify-plugin';
 import { type FastifyInstance, type FastifyPluginOptions } from 'fastify';
 
@@ -28,12 +29,11 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
   // );
 
   // métodos para occurrences
+  fastify.get('/connect/get', PublicKeyController);
   fastify.get('/occurrences', OccurrenceControllers.get);
   fastify.get(
-    '/occurrencesByNeighborhood/:NeighborhoodId',
-    OccurrenceControllers.getByNeighborhood
-  );
-  fastify.post('/occurrences/register', OccurrenceControllers.register);
+    '/occurrencesByNeighborhood/:NeighborhoodId',OccurrenceControllers.getByNeighborhood);
+  fastify.post('/occurrences/register',OccurrenceControllers.register);
   fastify.delete('/occurrences/:occurrenceId', OccurrenceControllers.delete);
 
   //métodos para emails

@@ -28,8 +28,7 @@ class OccurrenceService {
     occurrence.coordenadas = dataOccurrence.coordenadas;
     occurrence.content_occurrence = dataOccurrence.content_occurrence;
     occurrence.date_occurrence = dataOccurrence.date_occurrence;
-    occurrence.id_state = dataOccurrence.id_state;
-    occurrence.id_city = dataOccurrence.id_city;
+   
     occurrence.id_neighborhood = dataOccurrence.id_neighborhood;
     occurrence.user = user;
 

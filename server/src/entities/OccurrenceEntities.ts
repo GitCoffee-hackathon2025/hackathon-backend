@@ -40,12 +40,6 @@ export class OccurrenceEntity {
   date_occurrence!: Date;
 
   @Column()
-  id_state!: number;
-
-  @Column()
-  id_city!: number;
-
-  @Column()
   id_neighborhood!: number;
 
   @Column({ type: 'text' })
