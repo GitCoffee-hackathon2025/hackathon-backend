@@ -31,7 +31,10 @@ class OccurrenceRepository {
   }
 
   async getAllOccurrences(): Promise<OccurrenceEntity[]> {
-   return await this.repo.find();
+   return await this.repo.find({
+    relations: ['type'],
+   });
+   
  }
 
 

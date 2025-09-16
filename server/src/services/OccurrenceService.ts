@@ -46,7 +46,7 @@ async getAllOccurrencesCoordenades() {
   const occurrencesCoordenades = occurrences.map((occurrence) => ({
     id_occurrence: occurrence.id_occurrence,
     coordenadas: occurrence.coordenadas,
-    type: occurrence.type?.name_type_occurrence, // pega o nome do tipo
+    type: occurrence.type
   }));
 
   return occurrencesCoordenades;
