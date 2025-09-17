@@ -18,8 +18,8 @@ class UserEntity {
   @Column({ type: 'varchar', length: 150 })
   password!: string;
 
-  @Column({ type: 'date' })
-  dateBirth!: Date;
+  @Column({ type: 'date' , nullable: true })
+  dateBirth!: Date | null;
 
   @OneToMany(() => OccurrenceEntity, (occurrence) => occurrence.user)
   occurrences!: OccurrenceEntity[];

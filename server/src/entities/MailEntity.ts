@@ -11,10 +11,10 @@ class MailEntity {
   @JoinColumn({ name: 'id_user' })
   user!: UserEntity;
 
-  @Column({ name: 'type_mail', type: 'varchar', length: 10 })
+  @Column({ name: 'type_mail', type: 'varchar', length: 30 })
   type!: string;
 
-  @Column({ name: 'random_mail', type: 'varchar', length: 50 })
+  @Column({ name: 'random_mail', type: 'varchar', length: 100 })
   random!: string;
 
   @Column({ name: 'expires_at', type: 'timestamp' })

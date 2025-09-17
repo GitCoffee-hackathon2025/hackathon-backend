@@ -52,14 +52,6 @@ export class OccurrenceEntity {
 
 
   @Column()
-  id_state!: number;
-
-
-  @Column()
-  id_city!: number;
-
-
-  @Column()
   id_neighborhood!: number;
 
 

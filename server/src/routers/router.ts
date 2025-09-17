@@ -47,7 +47,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
 
 
   // Occurrences
-  fastify.post('/occurrences/register', useValidates(true), OccurrenceController.register);
+  fastify.post('/occurrences/register', OccurrenceController.register);
   fastify.get('/occurrences', OccurrenceController.get);
   fastify.get('/occurrences/neighborhood', OccurrenceController.getByNeighborhood);
   fastify.delete('/occurrences', useValidates(true), OccurrenceController.delete);

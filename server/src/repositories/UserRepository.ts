@@ -10,7 +10,9 @@ class UserRepository {
   }
 
   async findById(id: number): Promise<UserEntity | null> {
+    console.log(id, "ID DO REPOSITORY");
     const user = await this.repo.findOneBy({ id_user: id });
+    console.log(user);
     return user;
   }
 

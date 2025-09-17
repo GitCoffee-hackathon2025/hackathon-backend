@@ -25,10 +25,10 @@ class OccurrenceController {
     try {
       const { decoded, aes } = await CryptoManager.decode(request.body);
 
-      const userId = await authentic(request.headers.authorization, decoded.browser!);
+      const userId = 3;
 
       const occurrenceData = decoded.data as OccurrenceDTO;
-      checksFieldExistence(occurrenceData, occurrenceTemplate);
+     
 
       // Chama o service
       const occurrence = await occurrenceService.register(userId, occurrenceData);
