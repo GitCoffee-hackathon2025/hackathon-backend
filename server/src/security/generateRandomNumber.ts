@@ -1,7 +1,6 @@
-function generateRandomNumber() {
-  const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-  return 100000 + (array[0] % (999999 - 100000 + 1));
+function generateRandomNumber(length: number = 6): number {
+  const min = Math.pow(10, length - 1);
+  const max = Math.pow(10, length) - 1;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
 export default generateRandomNumber;

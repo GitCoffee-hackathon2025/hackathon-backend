@@ -1,10 +1,13 @@
 // Retorno de erro
 import FormatError from '../errors/FormatError';
 
+
 // Regex
 import { regexPassword, regexEmail } from '../config/userPropers';
 
+
 const maxDate = new Date(1900, 0, 1);
+
 
 class UserValidations {
   public static validName(name: string) {
@@ -14,6 +17,7 @@ class UserValidations {
       });
   }
 
+
   public static validEmail(email: string) {
     if (!regexEmail.test(email))
       throw new FormatError(400, 'Email inválido', {
@@ -21,15 +25,18 @@ class UserValidations {
       });
   }
 
+
   public static validDateBirth(date: Date) {
-    if (date.getTime())
+    if (date.toString() === 'Invalid Date')
       throw new FormatError(400, 'Data de aniversário inválida', { inputErro: ['DATE'] });
+
 
     if (date > maxDate ? date >= new Date() : false)
       throw new FormatError(400, 'É proíbido que viajantes do tempo usar esse site', {
         inputErro: ['DATE'],
       });
   }
+
 
   public static validPassword(password: string) {
     const errorOfPassword = regexPassword(password);
@@ -38,6 +45,7 @@ class UserValidations {
         inputErro: ['PASSWORD'],
       });
   }
+
 
   public static comparePasswords(password: string, confirm: string) {
     if (password !== confirm) {
@@ -48,4 +56,8 @@ class UserValidations {
   }
 }
 
+
 export default UserValidations;
+
+
+

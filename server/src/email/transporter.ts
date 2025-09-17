@@ -1,19 +1,22 @@
 import nodemailer from 'nodemailer';
 import 'dotenv/config';
 
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASSWORD,
+    user: 'ianmveiga54@gmail.com',
+    pass: 'rjxn pthu yykl igat',
   },
 });
+
 
 interface FormatMail {
   subject: string;
   text: string;
   html: string;
 }
+
 
 export async function sendMail(email: string, { subject, text, html }: FormatMail) {
   await transporter.sendMail({
@@ -24,3 +27,5 @@ export async function sendMail(email: string, { subject, text, html }: FormatMai
     html,
   });
 }
+
+
