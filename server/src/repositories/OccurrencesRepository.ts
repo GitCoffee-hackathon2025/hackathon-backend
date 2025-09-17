@@ -51,6 +51,12 @@ class OccurrenceRepository {
       ])
       .getMany();
   }
+    async getAllOccurrences(): Promise<OccurrenceEntity[]> {
+   return await this.repo.find({
+    relations: ['type'],
+   });
+   
+ }
 
   async delete(id: number): Promise<boolean> {
     const result: any = await this.repo.delete(id);

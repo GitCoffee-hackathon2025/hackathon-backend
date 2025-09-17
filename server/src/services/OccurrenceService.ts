@@ -49,6 +49,26 @@ class OccurrenceService {
     return occurrences;
   }
 
+  async getAllOccurrencesCoordenades() {
+  const occurrences = await this.occurrenceRepo.getAllOccurrences();
+
+
+  if (!occurrences || occurrences.length === 0) {
+    throw new FormatError(404, 'Não foram encontradas ocorrências');
+  }
+
+
+  const occurrencesCoordenades = occurrences.map((occurrence) => ({
+    id_occurrence: occurrence.id_occurrence,
+    coordenadas: occurrence.coordenadas,
+    type: occurrence.type
+  }));
+  console.log(occurrencesCoordenades);
+
+  return occurrencesCoordenades;
+}
+
+
   async delete(occurrenceId: number, userId: number): Promise<void> {
     const occurrence = await this.occurrenceRepo.findById(occurrenceId);
 

@@ -9,7 +9,10 @@ import { sendPublic } from '../security/crypto/CryptoManager';
 
 async function PublicKeyController(request: FastifyRequest, reply: FastifyReply) {
   try {
+    console.log('👉 Rota /connect/get chamada');
+
     const publicKey = await sendPublic();
+    console.log('🔑 Public key gerada:', publicKey);
 
     return reply.status(200).send({
       success: true,
@@ -17,8 +20,8 @@ async function PublicKeyController(request: FastifyRequest, reply: FastifyReply)
       kidRsa: publicKey.kid,
     });
   } catch (error) {
+    console.error('❌ Erro no PublicKeyController:', error);
     return SendError(error, reply);
   }
 }
-
-export default PublicKeyController
+export default PublicKeyController;
