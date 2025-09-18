@@ -78,10 +78,11 @@ class AuthService {
 
   public async refreshTokens(auth: string, browser: Browser) {
     try {
+      console.log('Refreshing tokens with auth:', auth, 'and browser:', browser);
       const token = await this.tokenManager.refreshTokens(auth, browser);
+      console.log('Token payload:', token);
       const stored = await this.repo.findByJti(token.jti);
 
-      this.validateToken(tokensConf.refresh.name, token, stored);
       const userId = stored!['user_id'];
 
       await this.repo.deleteAllByUserId(userId);
