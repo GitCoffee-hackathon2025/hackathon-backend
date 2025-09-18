@@ -58,14 +58,24 @@ class TokenRepository {
   public async delete(id: number): Promise<boolean> {
     return ((await this.repo.delete(id)).affected ?? 0) > 0;
   }
+public async deleteAllByUserId(userId: number): Promise<boolean> {
+  try {
+    console.log(`🗑️ Deletando tokens do usuário: ${userId}`);
+    
+    // ✅ Use o nome da coluna foreign key (provavelmente 'user_id')
+    const result = await this.repo
+      .createQueryBuilder()
+      .delete()
+       .where('id_user = :userId', { userId }) // ← Nome da coluna FK na tabela Token
+      .execute();
 
-  public async deleteAllByUserId(userId: number): Promise<boolean> {
-    return (
-      ((
-        await this.repo.createQueryBuilder().delete().where('id_user = :v', { v: userId }).execute()
-      ).affected ?? 0) > 0
-    );
+    console.log(`✅ ${result.affected} tokens deletados para o usuário ${userId}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao deletar tokens:', error);
+    return false;
   }
+}
 }
 
 export default TokenRepository;

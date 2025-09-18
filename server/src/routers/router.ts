@@ -37,7 +37,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
   // Tokens
   fastify.post('/auth/send-registration-code', AuthController.sendEmailForRegister);
   fastify.post('/auth/verify-registration-code', AuthController.verifyRegistrationCode);
-  fastify.post('/auth/tokens', useValidates(), AuthController.login);
+  fastify.post('/auth/login',  AuthController.login);
   fastify.put('/auth/tokens', useValidates(true), AuthController.recover);
 
 

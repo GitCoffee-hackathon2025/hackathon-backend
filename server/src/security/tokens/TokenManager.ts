@@ -26,30 +26,29 @@ async function hashBrowserConnect(connect: string): Promise<string> {
 
 class TokenManager {
   private validations = new TokenValidations();
+private createToken(
+  options: { name: Uppercase<string>; expiresIn: number },
+  payload: { id: number; bh: string; akid?: string; vCode?: number }
+) {
+  const current = getVersionKey().current;
+  const jti = crypto.randomUUID();
 
-  private createToken(
-    options: { name: Uppercase<string>; expiresIn: number },
-    payload: { id: number; bh: string; akid?: string; vCode?: number }
-  ) {
-    const current = getVersionKey().current;
-    const jti = crypto.randomUUID();
+  const table: Omit<TokenTable, 'id_token' | 'expires_at'> = {
+    user_id: payload.id, // ← Volte para user_id se a interface ainda usar user_id
+    type: options.name,
+    browser: payload.bh,
+    jti,
+  };
 
-    const table: Omit<TokenTable, 'id_token' | 'expires_at'> = {
-      user_id: payload.id,
-      type: options.name,
-      browser: payload.bh,
-      jti,
-    };
-
-    return {
-      token: usesJwtInstance().sign(
-        { name: options.name, ...payload },
-        { kid: current, jti, expiresIn: options.expiresIn }
-      ),
-      table,
-      expiresIn: options.expiresIn,
-    };
-  }
+  return {
+    token: usesJwtInstance().sign(
+      { name: options.name, ...payload },
+      { kid: current, jti, expiresIn: options.expiresIn }
+    ),
+    table,
+    expiresIn: options.expiresIn,
+  };
+}
 
   public async generatePairForLogin(id: number, browser: Browser) {
     this.validations.validateBrowser(browser);
