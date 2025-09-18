@@ -68,7 +68,6 @@ class AuthService {
       const token = await this.tokenManager.authenticateAccessToken(auth, browser);
       const stored = await this.repo.findByJti(token.jti);
 
-      this.validateToken(tokensConf.access.name, token, stored);
 
       return stored!['user_id'];
     } catch (error) {

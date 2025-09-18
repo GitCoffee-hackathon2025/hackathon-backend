@@ -70,7 +70,12 @@ private createToken(
   public async authenticateAccessToken(authorization: string, browser: Browser) {
     this.validations.validateBrowser(browser);
 
-    const access = authorization.split(' ')[1];
+        console.log('authorization', authorization)
+    const access = authorization.startsWith('Bearer ') 
+  ? authorization.split(' ')[1]
+  : authorization;
+    console.log('access', access)
+
     await this.validations.validateToken(access, browser);
 
     try {
