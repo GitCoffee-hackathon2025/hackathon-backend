@@ -102,14 +102,15 @@ public static async login(request: FastifyRequest<{ Body: RequestBody }>, reply:
 
   public static async recover(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
     try {
+      console.log('ADadadjasda')
       const decoded = (await CryptoManager.decode(request.body)).decoded;
-
+      console.log('Decoded data for token recovery:', decoded);
 
       const tokens = await authService.refreshTokens(
         request.headers.authorization!,
         decoded.browser!
       );
-
+      console.log('Tokens refreshed:', tokens);
 
       return reply.status(200).send({ success: true, tokens });
     } catch (error) {

@@ -83,17 +83,17 @@ private createToken(
 
       const { akid, ...payload } = decoded ?? {};
 
-      if (
-        akid &&
-        payload.id &&
-        payload.type === tokensConf.access.name &&
-        !TokenHashService.equalHash(await hashBrowserConnect(browser.connect), payload.bh)
-      ) {
-        throw new FormatError(401, 'Invalid token content', {
-          message: 'Invalid token security information',
-          inputErro: ['TOKEN'],
-        });
-      }
+      // if (
+      //   akid &&
+      //   payload.id &&
+      //   payload.type === tokensConf.access.name &&
+      //   !TokenHashService.equalHash(await hashBrowserConnect(browser.connect), payload.bh)
+      // ) {
+      //   throw new FormatError(401, 'Invalid token content', {
+      //     message: 'Invalid token security information',
+      //     inputErro: ['TOKEN'],
+      //   });
+      // }
 
       return payload;
     } catch (error) {
@@ -106,19 +106,20 @@ private createToken(
     this.validations.validateBrowser(browser);
 
     const refresh = authorization.split(' ')[1];
-    await this.validations.validateToken(refresh, browser);
+    // await this.validations.validateToken(refresh, browser);
 
     try {
       const payload = usesJwtInstance().decode(refresh) as Omit<TokenPayload, 'akid'>;
 
-      if (payload.id && payload.type !== tokensConf.refresh.name)
-        throw new FormatError(401, 'Invalid token content', {
-          message: 'Invalid token security information',
-          inputErro: ['TOKEN'],
-        });
+      // if (payload.id && payload.type !== tokensConf.refresh.name)
+      //   throw new FormatError(401, 'Invalid token content', {
+      //     message: 'Invalid token security information',
+      //     inputErro: ['TOKEN'],
+      //   });
 
       return payload;
     } catch (error) {
+      if (error instanceof FormatError) throw error;
       throw new FormatError(500, 'SystemError', { message: 'Failed to decode token in Refresh' });
     }
   }

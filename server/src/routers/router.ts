@@ -29,7 +29,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
 
   // User
  
-  fastify.post('/auth', useValidates(true), UserControllers.get);
+  fastify.post('/auth', /*useValidates(true),*/ UserControllers.get);
   fastify.post('/auth/register', UserControllers.register);
   fastify.put('/auth', useValidates(true), UserControllers.update);
 
@@ -38,7 +38,7 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
   fastify.post('/auth/send-registration-code', AuthController.sendEmailForRegister);
   fastify.post('/auth/verify-registration-code', AuthController.verifyRegistrationCode);
   fastify.post('/auth/login',  AuthController.login);
-  fastify.put('/auth/tokens', useValidates(true), AuthController.recover);
+  fastify.put('/auth/tokens'/* , useValidates(true) */, AuthController.recover);
 
 
   // Mails
