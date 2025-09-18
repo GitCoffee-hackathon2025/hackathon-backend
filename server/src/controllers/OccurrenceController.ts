@@ -25,7 +25,7 @@ class OccurrenceController {
     try {
       const { decoded, aes } = await CryptoManager.decode(request.body);
 
-      const userId = 3;
+      const userId = 1;
 
       const occurrenceData = decoded.data as OccurrenceDTO;
      
@@ -57,34 +57,38 @@ class OccurrenceController {
     }
   }
 
-  public static async get(
+public static async get(
     request: FastifyRequest<{ Params: { id: number } }>,
     reply: FastifyReply
-  ) {
+) {
     try {
-      const occurrence = await occurrenceService.findById(Number(request.params.id));
+        // O ID é recuperado corretamente de request.params
+        const occurrence = await occurrenceService.findById(Number(request.params.id));
 
-      if (!occurrence) throw new FormatError(404, 'Relatório não encontrado');
+        if (!occurrence) {
+            throw new FormatError(404, 'Relatório não encontrado');
+        }
 
-      return reply.status(200).send({
-        success: true,
-        data: {
-          id: occurrence.id_occurrence,
-          content: occurrence.content_occurrence,
-          coordenadas: occurrence.coordenadas,
-          created_at: occurrence.created_at,
-          user: occurrence.user
-            ? { id: occurrence.user.id_user, name: occurrence.user.name }
-            : null,
-          type: occurrence.type
-            ? { id: occurrence.type.id_type_occurrence, name: occurrence.type.name_type_occurrence }
-            : null,
-        },
-      });
+        return reply.status(200).send({
+            success: true,
+            data: {
+                id: occurrence.id_occurrence,
+                content: occurrence.content_occurrence,
+                coordenadas: occurrence.coordenadas,
+                created_at: occurrence.created_at,
+                date_occurrence: occurrence.date_occurrence, // Adicione date_occurrence aqui
+                user: occurrence.user
+                    ? { id: occurrence.user.id_user, name: occurrence.user.name }
+                    : null,
+                type: occurrence.type
+                    ? { id: occurrence.type.id_type_occurrence, name: occurrence.type.name_type_occurrence }
+                    : null,
+            },
+        });
     } catch (error) {
-      return SendError(error, reply);
+        return SendError(error, reply);
     }
-  }
+}
 
    public static async getAllOccurrencesCoordenades(
    request: FastifyRequest,

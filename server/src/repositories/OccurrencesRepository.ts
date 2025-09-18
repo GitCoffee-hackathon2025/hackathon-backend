@@ -16,7 +16,7 @@ class OccurrenceRepository {
   async findById(id: number): Promise<OccurrenceEntity | null> {
     return this.repo.findOne({
       where: { id_occurrence: id },
-      relations: ['user', 'type', 'comments'], // se quiser trazer junto
+      relations: ['user', 'type'], // se quiser trazer junto
       select: [
         'id_occurrence',
         'content_occurrence',
