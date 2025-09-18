@@ -19,16 +19,16 @@ import userService from '../services/UserService';
 
 
 class AuthController {
-  public static async login(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
-    try {
-      const { decoded, aes } = await CryptoManager.decode(request.body);
+    // AuthController.ts
+public static async login(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
+  try {
+    const { decoded, aes } = await CryptoManager.decode(request.body);
+    const parameters = decoded.data as Pick<UserValues, 'email' | 'password'>;
+    
+    const { id: userId, ...dataUser } = await userService.login(parameters);
 
 
-      const parameters = decoded.data as Pick<UserValues, 'email' | 'password'>;
-      const { id: userId, ...dataUser } = await userService.login(parameters);
-
-
-      return reply.status(200).send({
+     return reply.status(200).send({
         success: true,
         data: await CryptoManager.encode({ message: 'Usuário logado', dataUser }, aes),
         tokens: await authService.issueTokens(userId, decoded.browser!),
@@ -36,7 +36,7 @@ class AuthController {
     } catch (error) {
       return SendError(error, reply);
     }
-  }
+}
 
 
      public static async sendEmailForRegister(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {

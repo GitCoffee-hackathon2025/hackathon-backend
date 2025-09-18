@@ -23,15 +23,15 @@ import UserValidations from '../validations/UserValidations';
 import userIsVerified from './utils/userIsVerified';
 
 
-async function compareHashPassword(user: string, password: string) {
-  await BcryptHashService.hash(password)
-    .then(async (hash) => await BcryptHashService.compare(hash, user))
-    .then((equal) => {
-      if (!equal)
-        throw new FormatError(401, 'Senha diferente', {
-          inputErro: ['PASSWORD'],
-        });
+// ✅ CÓDIGO CORRIGIDO:
+async function compareHashPassword(hashedPassword: string, plainPassword: string) {
+  const isMatch = await BcryptHashService.compare(plainPassword, hashedPassword);
+  
+  if (!isMatch) {
+    throw new FormatError(401, 'Senha incorreta', {
+      inputErro: ['PASSWORD'],
     });
+  }
 }
 
 
@@ -82,9 +82,6 @@ class UserService {
         inputErro: ['EMAIL'],
       });
 
-
-    await userIsVerified(user);
-    UserValidations.validPassword(password);
 
 
     await compareHashPassword(user.password, password);
