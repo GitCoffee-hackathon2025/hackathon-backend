@@ -76,7 +76,7 @@ private createToken(
   : authorization;
     console.log('access', access)
 
-    await this.validations.validateToken(access, browser);
+  //  await this.validations.validateToken(access, browser);
 
     try {
       const decoded = usesJwtInstance().decode(access) as TokenPayload;

@@ -25,7 +25,7 @@ class OccurrenceController {
     try {
       const { decoded, aes } = await CryptoManager.decode(request.body);
 
-      const userId = 1;
+      const userId = await authentic(request.headers.authorization, decoded.browser!);
 
       const occurrenceData = decoded.data as OccurrenceDTO;
      
