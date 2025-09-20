@@ -1,7 +1,14 @@
-class FormatError extends Error {
-  constructor(public status: number, name: string, message: string, public original?: unknown) {
-    super(message);
+interface ParametersOfError {
+  unknown: unknown;
+  message: string;
+  inputErro: string[];
+}
 
+type OpcionalParametersOfError = Partial<ParametersOfError>;
+
+class FormatError extends Error {
+  constructor(public status: number, name: string, public parameters?: OpcionalParametersOfError) {
+    super(parameters?.message);
     this.name = name;
   }
 }

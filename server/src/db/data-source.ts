@@ -1,33 +1,30 @@
-import { DataSource } from "typeorm";
-import { UserEntity, ReportEntity, ReviewEntity, TypeReportEntity, TypeReviewEntity, ReportCommentEntity, ReviewCommentEntity, TokenEntity, VerificationTokenEntity } from "../entities/userEntities"; // Ajuste o caminho conforme necessário
+import { DataSource } from 'typeorm';
+
+import UserEntity from '../entities/UserEntity';
+import TokenEntity from '../entities/TokenEntity';
+import MailEntity from '../entities/MailEntity';
+import { OccurrenceEntity, TypeOccurrenceEntity } from '../entities/OccurrenceEntities';
+
 import 'dotenv/config';
 
-/* ============================
-
-Na hora de fazer o deploy é nessário importar o dotenv neste arquivo, e PELO MENOS usar o process.env em `userName` e `password`
-
-============================ */
 export const AppDataSource = new DataSource({
-    type: "mysql", 
-    host: process.env.HOST,
-    port: 3306,
-    username: process.env.USER,
-    password: process.env.PASSWORD,
-    database: "hackathon",
-    synchronize: true, 
-    logging: true,
-    entities: [
-        UserEntity,
-        ReportEntity,
-        ReviewEntity,
-        TypeReportEntity,
-        TypeReviewEntity,
-        ReportCommentEntity,
-        ReviewCommentEntity,
-        TokenEntity,
-        VerificationTokenEntity
-
-    ],
-    migrations: [], 
-    subscribers: [],
+  type: 'mysql',
+  host: process.env.HOST,
+  port: 3306,
+  username: 'root',
+  password: process.env.PASSWORD,
+  database: 'hackathon',
+  synchronize: true,
+  logging: true,
+  entities: [
+    UserEntity,
+    TokenEntity,
+    MailEntity,
+    OccurrenceEntity,
+    TypeOccurrenceEntity,
+    // TokenEntity,
+    // VerificationTokenEntity,
+  ],
+  migrations: [],
+  subscribers: [],
 });

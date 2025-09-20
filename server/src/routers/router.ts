@@ -1,55 +1,61 @@
 import fp from 'fastify-plugin';
-import { FastifyInstance, FastifyPluginOptions } from 'fastify';
+import { type FastifyInstance, type FastifyPluginOptions } from 'fastify';
+import { type RequestBody } from '../types/requestBodyTypes';
 
-import { loginUser, registerUser, updateUser } from '../controllers/userControllers';
 
-import {
-  getReport,
-  registerReport,
-  deleteReport,
-  getReportByNeighborhood,
-} from '../controllers/reportControllers';
+import validateOfFormatBody from '../middlewares/validateOfFormatBody';
+import validateOfHeaderBody from '../middlewares/validateOfBody';
+import validateOfToken from '../middlewares/validateOfToken';
 
-import { getReview, registerReview, deleteReview } from '../controllers/reviewControllers';
 
-import { registerReportComment, registerReviewComment } from '../controllers/commentControllers';
+import PublicKeyController from '../controllers/CryptoController';
+import UserControllers from '../controllers/UserController';
+import OccurrenceController from '../controllers/OccurrenceController';
+import AuthController from '../controllers/AuthController';
 
-import { sendVerificationToken, verifyToken } from '../controllers/tokenControllers';
 
-import { authenticateSession } from '../plugins/authenticate';
+const validates = [validateOfFormatBody, validateOfHeaderBody];
 
-import { UpdateUserBody, UpdateType, ExtendedUpdateBody } from '../types/userTypes';
 
-async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
-  // Conta do usuário
-  fastify.post('/auth/login', loginUser);
-  fastify.post('/auth/register', registerUser);
-  fastify.put<{
-    Body: ExtendedUpdateBody;
-  }>(
-    '/auth/update',
-    {
-      preHandler: authenticateSession,
-    },
-    updateUser
-  );
-
-  // métodos para reports
-  fastify.get('/reports', getReport);
-  fastify.get('/reportsByNeighborhood/:NeighborhoodId', getReportByNeighborhood);
-  fastify.post('/reports/register', registerReport);
-  fastify.post('/reports/:reportId/comments', registerReportComment);
-  fastify.delete('/reports/:reportId', deleteReport);
-
-  // métodos para reviews
-  fastify.get('/reviews', getReview);
-  fastify.post('/reviews/register', registerReview);
-  fastify.post('/reviews/:reviewId/comments', registerReviewComment);
-  fastify.delete('/reviews/:reviewId', deleteReview);
-
-  //métodos para emails
-  fastify.post('/email/sendtoken', sendVerificationToken);
-  fastify.post('/email/verification', verifyToken);
+function useValidates(auth: boolean = false) {
+  return { preHandler: auth ? [...validates, validateOfToken] : validates };
 }
 
-export const userRoutersPlugin = fp(userRouters);
+
+async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptions) {
+  // Public key
+  fastify.get('/connect/get', PublicKeyController);
+
+
+  // User
+ 
+  fastify.post('/auth', /*useValidates(true),*/ UserControllers.get);
+  fastify.post('/auth/register', UserControllers.register);
+  fastify.put('/auth', useValidates(true), UserControllers.update);
+
+
+  // Tokens
+  fastify.post('/auth/send-registration-code', AuthController.sendEmailForRegister);
+  fastify.post('/auth/verify-registration-code', AuthController.verifyRegistrationCode);
+  fastify.post('/auth/login',  AuthController.login);
+  fastify.put('/auth/tokens'/* , useValidates(true) */, AuthController.recover);
+
+
+  // Mails
+  fastify.post('/auth/mail/email', useValidates(true), AuthController.sendMailChangeEmail);
+  fastify.post('/auth/mail/password', useValidates(true), AuthController.sendMailPassword);
+
+
+  // Occurrences
+  fastify.get('/occurrences/coordenates', OccurrenceController.getAllOccurrencesCoordenades);
+  fastify.post('/occurrences/register', OccurrenceController.register);
+  fastify.get('/occurrences/:id', OccurrenceController.get)
+  fastify.get('/occurrences/neighborhood/:NeighborhoodId', OccurrenceController.getByNeighborhood);
+  fastify.delete('/occurrences', useValidates(true), OccurrenceController.delete);
+}
+
+
+const userRoutersPlugin = fp(userRouters);
+export default userRoutersPlugin;
+
+

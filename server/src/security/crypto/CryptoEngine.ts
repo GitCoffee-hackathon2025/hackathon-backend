@@ -1,9 +1,5 @@
 // Tipagens
-import {
-  type RequestBody,
-  type DecryptedRequestData,
-  type Kid,
-} from '../../typescript/requestBodyType';
+import { type RequestBody, DecryptedRequestData, Kid } from '../../types/requestBodyTypes';
 
 // Configurações
 import webcrypto from '../../config/keys/crypto.config';
@@ -32,7 +28,9 @@ class CryptoEngine {
         kid: key.kid,
       };
     } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Failed to call and export public rsa key', error);
+      throw new FormatError(500, 'SystemError', {
+        message: 'Failed to call and export public rsa key',
+      });
     }
   }
 
@@ -47,7 +45,7 @@ class CryptoEngine {
         [...webcrypto.aes.keyUsages]
       );
     } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Error calling aes key', error);
+      throw new FormatError(500, 'SystemError', { message: 'Error calling aes key' });
     }
   }
 
@@ -68,12 +66,10 @@ class CryptoEngine {
     } catch (error) {
       if (error instanceof FormatError) throw error;
 
-      throw new FormatError(
-        401,
-        'Vandalized aes key',
-        'Corrupted or tampered request aes key',
-        error
-      );
+      throw new FormatError(401, 'Vandalized aes key', {
+        message: 'Corrupted or tampered request aes key',
+        inputErro: ['CRYPTO'],
+      });
     }
   }
 
@@ -93,12 +89,10 @@ class CryptoEngine {
         // ArrayBuffer -> JSON -> código
         .then((result) => JSON.parse(new TextDecoder().decode(result)));
     } catch (error) {
-      throw new FormatError(
-        400,
-        'Malformed ciphertext',
-        'Error decrypting data received from the request',
-        error
-      );
+      throw new FormatError(400, 'Malformed ciphertext', {
+        message: 'Error decrypting data received from the request',
+        inputErro: ['CRYPTO'],
+      });
     }
   }
 
@@ -123,7 +117,7 @@ class CryptoEngine {
         tag: BufferConverter.arrayBufferToBase64(tag),
       };
     } catch (error) {
-      throw new FormatError(500, 'SystemError', 'Response encryption failed', error);
+      throw new FormatError(500, 'SystemError', { message: 'Response encryption failed' });
     }
   }
 }
