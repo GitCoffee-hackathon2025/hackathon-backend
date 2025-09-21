@@ -8,15 +8,17 @@ import tokensConf from '../config/keys/tokens.config';
 // Banco
 import TokenEntity from '../entities/TokenEntity';
 import TokenRepository from '../repositories/TokenRepository';
+import UserEntity from '../entities/UserEntity';
 
 // Retorno de erro
 import FormatError from '../errors/FormatError';
 
 // Funções
 import TokenManager from '../security/tokens/TokenManager';
-
+import UserRepository from '../repositories/UserRepository';
 class AuthService {
   private repo = new TokenRepository();
+  private userRepo = UserRepository;
   private tokenManager = new TokenManager();
 
   private validateToken(type: Uppercase<string>, payload: TokenPayload, stored: TokenTable | null) {
@@ -35,33 +37,76 @@ class AuthService {
         inputErro: ['TOKEN'],
       });
 
-    if (payload.id !== stored['user_id'])
+    if (payload.id !== stored['id_user'])
       throw new FormatError(401, 'Usuário do token inválido', {
         inputErro: ['TOKEN'],
       });
   }
 
-  public async issueTokens(userId: number, browser: Browser) {
+    public async getUserDataFromToken(token: string): Promise<any> {
     try {
-      const { refresh, access } = await this.tokenManager.generatePairForLogin(userId, browser);
-
-      if (!(await this.repo.deleteAllByUserId(userId)))
-        throw new FormatError(500, 'Não foi possível limpar os tokens');
-
-      for (const props of Object.values({ refresh, access })) {
-        const Token = new TokenEntity();
-        Object.assign(Token, props.table);
-
-        if (!(await this.repo.save(Token, props.expiresIn)))
-          throw new FormatError(500, 'Falha ao armazenar os tokens');
+      console.log('Obtendo dados do usuário do token:', token);
+      
+      // Decodificar o token para obter o payload
+      const payload = this.tokenManager.decodeToken(token);
+      
+      if (!payload || !payload.id) {
+        throw new FormatError(401, 'Token inválido ou sem ID de usuário');
       }
 
-      return { refresh: refresh.token, access: access.token };
+      console.log('Payload decodificado:', payload);
+
+      // Buscar dados do usuário no banco de dados
+      // Você precisa implementar o UserRepository.findById()
+      const userData = await this.userRepo.findById(payload.id);
+      
+      if (!userData) {
+        throw new FormatError(404, 'Usuário não encontrado');
+      }
+
+      console.log('Dados do usuário encontrados:', userData);
+
+      // Retornar apenas os dados necessários (evitar dados sensíveis)
+      return {
+        id: userData.id_user,
+        email: userData.email,
+        name: userData.name,
+        dateBirth: userData.dateBirth, // ajuste conforme seu schema
+        // adicione outros campos necessários
+      };
     } catch (error) {
+      console.error('Erro em getUserDataFromToken:', error);
       if (error instanceof FormatError) throw error;
-      throw new FormatError(500, 'Erro ao criar tokens');
+      throw new FormatError(500, 'Erro ao obter dados do usuário');
     }
   }
+
+  public async issueTokens(userId: number, browser: Browser) {
+  try {
+    const { refresh, access } = await this.tokenManager.generatePairForLogin(userId, browser);
+
+    if (!(await this.repo.deleteAllByUserId(userId)))
+      throw new FormatError(500, 'Não foi possível limpar os tokens');
+
+    for (const props of Object.values({ refresh, access })) {
+      const Token = new TokenEntity();
+      
+      // Como você já mudou tudo para id_user, props.table já deve ter id_user
+      Object.assign(Token, props.table);
+      
+      // Adicione a relação com o usuário
+      Token.user = { id_user: userId } as UserEntity;
+
+      if (!(await this.repo.save(Token, props.expiresIn)))
+        throw new FormatError(500, 'Falha ao armazenar os tokens');
+    }
+
+    return { refresh: refresh.token, access: access.token };
+  } catch (error) {
+    if (error instanceof FormatError) throw error;
+    throw new FormatError(500, 'Erro ao criar tokens');
+  }
+}
 
   public async authenticateAccess(auth: string, browser: Browser) {
     try {
@@ -69,7 +114,7 @@ class AuthService {
       const stored = await this.repo.findByJti(token.jti);
 
 
-      return stored!['user_id'];
+      return stored!['id_user'];
     } catch (error) {
       if (error instanceof FormatError) throw error;
       throw new FormatError(500, 'Erro ao autenticar usuário');
@@ -83,7 +128,7 @@ class AuthService {
       console.log('Token payload:', token);
       const stored = await this.repo.findByJti(token.jti);
 
-      const userId = stored!['user_id'];
+      const userId = stored!['id_user'];
 
       await this.repo.deleteAllByUserId(userId);
 

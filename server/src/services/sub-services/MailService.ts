@@ -233,7 +233,7 @@ class MailService {
 
     const Mail = new MailEntity();
     Object.assign(Mail, {
-      user_id: userId,
+      id_user: userId,
       type: mailsConf[type].name,
       random: await BcryptHashService.hash(String(random)),
     });

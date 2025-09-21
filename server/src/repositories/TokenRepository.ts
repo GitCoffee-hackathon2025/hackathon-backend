@@ -22,7 +22,7 @@ class TokenRepository {
         'token.jti AS jti',
         'token.type AS type',
         'token.browser AS browser',
-        'user.id_user AS user_id',
+        'user.id_user AS id_user',
       ])
       .where('token.jti = :jti', { jti })
       .getRawOne<TokenTable>();

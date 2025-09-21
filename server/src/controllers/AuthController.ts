@@ -100,24 +100,37 @@ public static async login(request: FastifyRequest<{ Body: RequestBody }>, reply:
   }
 
 
-  public static async recover(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
-    try {
-      console.log('ADadadjasda')
-      const decoded = (await CryptoManager.decode(request.body)).decoded;
-      console.log('Decoded data for token recovery:', decoded);
+ public static async recover(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
+  try {
+    console.log('Iniciando recuperação de tokens e dados do usuário');
+    
+    const { decoded, aes } = await CryptoManager.decode(request.body);
+    console.log('Decoded data for token recovery:', decoded);
 
-      const tokens = await authService.refreshTokens(
-        request.headers.authorization!,
-        decoded.browser!
-      );
-      console.log('Tokens refreshed:', tokens);
+    const tokens = await authService.refreshTokens(
+      request.headers.authorization!,
+      decoded.browser!
+    );
+    
+    // Obter dados do usuário
+    // const userData = await authService.getUserDataFromToken(tokens.access);
+    //console.log('User data recovered:', userData);
+    
+    // Criptografar dados do usuário com a mesma chave AES
+    //const encryptedUserData = await CryptoManager.encode({ dataUser: userData }, aes);
+    
+    console.log('Tokens refreshed:', tokens);
 
-      return reply.status(200).send({ success: true, tokens });
-    } catch (error) {
-      return SendError(error, reply);
-    }
+    return reply.status(200).send({ 
+      success: true, 
+      tokens,
+      // 👈 AGORA ESTÁ RETORNANDO OS DADOS DO USUÁRIO
+    });
+  } catch (error) {
+    console.error('Erro no recover:', error);
+    return SendError(error, reply);
   }
-
+}
 
   public static async sendMailPassword(
     request: FastifyRequest<{ Body: RequestBody }>,

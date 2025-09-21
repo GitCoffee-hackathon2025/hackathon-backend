@@ -8,7 +8,7 @@ export interface MailTable {
 
 export interface MailValues {
   id_mail: number;
-  user_id: number;
+  id_user: number;
   type: string;
   random: `${number}`;
   expires_at: number;
