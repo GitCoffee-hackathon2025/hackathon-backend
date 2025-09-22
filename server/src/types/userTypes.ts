@@ -82,3 +82,4 @@ export interface OccurrenceType {
   id_neighborhood: number;
   content_occurrence: string;
 }
+
