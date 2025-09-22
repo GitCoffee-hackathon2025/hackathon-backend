@@ -30,14 +30,13 @@ class OccurrenceRepository {
     });
   }
 
-  async findByNeighborhood(id: number, limit: number = 3): Promise<OccurrenceEntity[]> {
+  async findByNeighborhood(id: number): Promise<OccurrenceEntity[]> {
     return this.repo
       .createQueryBuilder('occurrence')
       .leftJoinAndSelect('occurrence.user', 'user')
       .leftJoinAndSelect('occurrence.type', 'type')
       .where('occurrence.id_neighborhood = :id', { id })
       .orderBy('occurrence.created_at', 'DESC')
-      .take(limit)
       .select([
         'occurrence.id_occurrence',
         'occurrence.content_occurrence',
