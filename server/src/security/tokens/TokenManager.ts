@@ -34,7 +34,7 @@ private createToken(
   const jti = crypto.randomUUID();
 
   const table: Omit<TokenTable, 'id_token' | 'expires_at'> = {
-    id_user: payload.id, // ← Volte para user_id se a interface ainda usar user_id
+    id_user: payload.id, // ← Volte para id_user se a interface ainda usar id_user
     type: options.name,
     browser: payload.bh,
     jti,

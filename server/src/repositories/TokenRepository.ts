@@ -62,7 +62,7 @@ public async deleteAllByUserId(userId: number): Promise<boolean> {
   try {
     console.log(`🗑️ Deletando tokens do usuário: ${userId}`);
     
-    // ✅ Use o nome da coluna foreign key (provavelmente 'user_id')
+    // ✅ Use o nome da coluna foreign key (provavelmente 'id_user')
     const result = await this.repo
       .createQueryBuilder()
       .delete()
