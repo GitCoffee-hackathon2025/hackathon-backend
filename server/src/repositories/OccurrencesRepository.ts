@@ -29,7 +29,21 @@ class OccurrenceRepository {
       ],
     });
   }
-
+async findByUserId(userId: number): Promise<OccurrenceEntity[]> {
+  return this.repo.find({
+    where: { user: { id_user: userId } },
+    relations: ['user', 'type'], // se precisar carregar os relacionamentos
+    select: [
+      'id_occurrence',
+      'content_occurrence',
+      'coordenadas',
+      'created_at',
+      'id_neighborhood',
+      'user',
+      'type',
+    ],
+  });
+}
   async findByNeighborhood(id: number, limit: number = 3): Promise<OccurrenceEntity[]> {
     return this.repo
       .createQueryBuilder('occurrence')

@@ -62,24 +62,23 @@ public static async get(
     reply: FastifyReply
 ) {
     try {
-        // O ID é recuperado corretamente de request.params
-        const occurrence = await occurrenceService.findById(Number(request.params.id));
+        // Isso está ERRADO - usando método que busca por user ID em vez de occurrence ID
+        const occurrences = await occurrenceService.findByUserId(Number(request.params.id));
 
-        if (!occurrence) {
+        if (!occurrences || occurrences.length === 0) {
             throw new FormatError(404, 'Relatório não encontrado');
         }
+
+        // Isso retornaria TODAS as ocorrências do usuário, não a ocorrência específica
+        const occurrence = occurrences[0];
 
         return reply.status(200).send({
             success: true,
             data: {
                 id: occurrence.id_occurrence,
                 content: occurrence.content_occurrence,
-                coordenadas: occurrence.coordenadas,
                 created_at: occurrence.created_at,
-                date_occurrence: occurrence.date_occurrence, // Adicione date_occurrence aqui
-                user: occurrence.user
-                    ? { id: occurrence.user.id_user, name: occurrence.user.name }
-                    : null,
+                date_occurrence: occurrence.date_occurrence,
                 type: occurrence.type
                     ? { id: occurrence.type.id_type_occurrence, name: occurrence.type.name_type_occurrence }
                     : null,
