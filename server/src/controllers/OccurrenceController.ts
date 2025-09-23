@@ -101,35 +101,32 @@ public static async get(
     reply: FastifyReply
 ) {
     try {
-        // Isso está ERRADO - usando método que busca por user ID em vez de occurrence ID
+        // Busca TODAS as ocorrências do usuário
         const occurrences = await occurrenceService.findByUserId(Number(request.params.id));
 
-       
-
-        // Isso retornaria TODAS as ocorrências do usuário, não a ocorrência específica
-        const occurrence = occurrences[0];
-
-        if (!occurrence) {
+        if (!occurrences || occurrences.length === 0) {
             return reply.status(404).send({
                 success: false,
-                message: 'Ocorrência não encontrada',
+                message: 'Nenhuma ocorrência encontrada para este usuário',
             });
         }
 
+        // Retorna TODAS as ocorrências, não apenas a primeira
         return reply.status(200).send({
             success: true,
-            data: Array.isArray(occurrence)
-                ? occurrence.map(o => ({
-                    id: o.id_occurrence,
-                    content: o.content_occurrence,
-                    created_at: o.created_at,
-                    coordenadas: o.coordenadas,
-                    date_occurrence: o.date_occurrence,
-                    type: o.type
-                        ? { id: o.type.id_type_occurrence, name: o.type.name_type_occurrence }
-                        : null,
-                }))
-                : occurrence,
+            data: occurrences.map(o => ({
+                id: o.id_occurrence,
+                content_occurrence: o.content_occurrence,
+                created_at: o.created_at,
+                coordenadas: o.coordenadas,
+                date_occurrence: o.date_occurrence,
+                type: o.type
+                    ? { 
+                        id: o.type.id_type_occurrence, 
+                        name: o.type.name_type_occurrence 
+                      }
+                    : null,
+            }))
         });
     } catch (error) {
         return SendError(error, reply);
