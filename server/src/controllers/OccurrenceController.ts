@@ -62,15 +62,19 @@ public static async get(
     reply: FastifyReply
 ) {
     try {
-        // Isso está ERRADO - usando método que busca por user ID em vez de occurrence ID
-        const occurrences = await occurrenceService.findByUserId(Number(request.params.id));
+        const occurrence = await occurrenceService.findById(Number(request.params.id));
 
-        if (!occurrences || occurrences.length === 0) {
-            throw new FormatError(404, 'Relatório não encontrado');
+                
+
+
+
+
+        if (!occurrence) {
+            return reply.status(404).send({
+                success: false,
+                message: 'Ocorrência não encontrada',
+            });
         }
-
-        // Isso retornaria TODAS as ocorrências do usuário, não a ocorrência específica
-        const occurrence = occurrences[0];
 
         return reply.status(200).send({
             success: true,
@@ -78,17 +82,59 @@ public static async get(
                 id: occurrence.id_occurrence,
                 content: occurrence.content_occurrence,
                 created_at: occurrence.created_at,
+                coordenadas: occurrence.coordenadas,
                 date_occurrence: occurrence.date_occurrence,
                 type: occurrence.type
-                    ? { id: occurrence.type.id_type_occurrence, name: occurrence.type.name_type_occurrence }
+                    ? { 
+                        id: occurrence.type.id_type_occurrence, 
+                        name: occurrence.type.name_type_occurrence 
+                      }
                     : null,
-            },
+            }
         });
     } catch (error) {
         return SendError(error, reply);
     }
 }
+   public static async getOccorrences(
+    request: FastifyRequest<{ Params: { id: number } }>,
+    reply: FastifyReply
+) {
+    try {
+        // Isso está ERRADO - usando método que busca por user ID em vez de occurrence ID
+        const occurrences = await occurrenceService.findByUserId(Number(request.params.id));
 
+       
+
+        // Isso retornaria TODAS as ocorrências do usuário, não a ocorrência específica
+        const occurrence = occurrences[0];
+
+        if (!occurrence) {
+            return reply.status(404).send({
+                success: false,
+                message: 'Ocorrência não encontrada',
+            });
+        }
+
+        return reply.status(200).send({
+            success: true,
+            data: Array.isArray(occurrence)
+                ? occurrence.map(o => ({
+                    id: o.id_occurrence,
+                    content: o.content_occurrence,
+                    created_at: o.created_at,
+                    coordenadas: o.coordenadas,
+                    date_occurrence: o.date_occurrence,
+                    type: o.type
+                        ? { id: o.type.id_type_occurrence, name: o.type.name_type_occurrence }
+                        : null,
+                }))
+                : occurrence,
+        });
+    } catch (error) {
+        return SendError(error, reply);
+    }
+}
    public static async getAllOccurrencesCoordenades(
    request: FastifyRequest,
    reply: FastifyReply
