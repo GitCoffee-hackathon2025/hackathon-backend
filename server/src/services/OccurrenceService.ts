@@ -42,7 +42,9 @@ class OccurrenceService {
   async findById(id: number) {
     return this.occurrenceRepo.findById(id);
   }
-
+  async findByUserId(id: number){
+    return this.occurrenceRepo.findByUserId(id);
+}
   async findByNeighborhood(id: number) {
     const occurrences = this.occurrenceRepo.findByNeighborhood(id);
     if (!occurrences) throw new FormatError(404, 'Não foi encontrado ocorrências desse bairro');

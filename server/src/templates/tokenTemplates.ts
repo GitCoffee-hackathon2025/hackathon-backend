@@ -1,6 +1,6 @@
 export interface TokenTable {
   id_token: number;
-  user_id: number;
+  id_user: number;
   type: string;
   jti: string;
   browser: string;

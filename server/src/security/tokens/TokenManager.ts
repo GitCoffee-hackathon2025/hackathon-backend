@@ -34,7 +34,7 @@ private createToken(
   const jti = crypto.randomUUID();
 
   const table: Omit<TokenTable, 'id_token' | 'expires_at'> = {
-    user_id: payload.id, // ← Volte para user_id se a interface ainda usar user_id
+    id_user: payload.id, // ← Volte para id_user se a interface ainda usar id_user
     type: options.name,
     browser: payload.bh,
     jti,
@@ -49,7 +49,17 @@ private createToken(
     expiresIn: options.expiresIn,
   };
 }
-
+   public decodeToken(token: string): TokenPayload | null {
+  try {
+    const cleanToken = token.startsWith('Bearer ') ? token.split(' ')[1] : token;
+    const decoded = usesJwtInstance().decode(cleanToken);
+    console.log("Payload decodificado:", decoded); // 👈 Adicione este log
+    return decoded as TokenPayload;
+  } catch (error) {
+    console.error('Erro ao decodificar token:', error);
+    return null;
+  }
+}
   public async generatePairForLogin(id: number, browser: Browser) {
     this.validations.validateBrowser(browser);
     try {

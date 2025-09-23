@@ -22,7 +22,7 @@ class TokenRepository {
         'token.jti AS jti',
         'token.type AS type',
         'token.browser AS browser',
-        'user.id_user AS user_id',
+        'user.id_user AS id_user',
       ])
       .where('token.jti = :jti', { jti })
       .getRawOne<TokenTable>();
@@ -62,7 +62,7 @@ public async deleteAllByUserId(userId: number): Promise<boolean> {
   try {
     console.log(`🗑️ Deletando tokens do usuário: ${userId}`);
     
-    // ✅ Use o nome da coluna foreign key (provavelmente 'user_id')
+    // ✅ Use o nome da coluna foreign key (provavelmente 'id_user')
     const result = await this.repo
       .createQueryBuilder()
       .delete()

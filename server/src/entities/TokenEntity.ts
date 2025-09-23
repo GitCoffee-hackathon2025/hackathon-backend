@@ -7,7 +7,7 @@ class TokenEntity {
   id_token!: number;
 
   // ✅ CORREÇÃO: A coluna foreign key na tabela Token
-  // provavelmente se chama 'user_id' ou 'id_user_fk'
+  // provavelmente se chama 'id_user' ou 'id_user_fk'
     @ManyToOne(() => UserEntity, (user) => user.tokens)
   @JoinColumn({ name: 'id_user' }) // ← Mantenha como id_user
   user!: UserEntity;

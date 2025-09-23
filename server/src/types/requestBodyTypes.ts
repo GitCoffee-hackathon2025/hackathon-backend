@@ -12,6 +12,7 @@ export interface RequestBody {
 }
 
 export interface DecryptedRequestData {
+  [x: string]: CryptoKey;
   data: Record<string, any>;
   browser: {
     auth: {
