@@ -39,7 +39,9 @@ async function userRouters(fastify: FastifyInstance, options: FastifyPluginOptio
   fastify.post('/auth/verify-registration-code', AuthController.verifyRegistrationCode);
   fastify.post('/auth/login',  AuthController.login);
   fastify.put('/auth/tokens'/* , useValidates(true) */, AuthController.recover);
-
+  fastify.post('/auth/send-recovery-code', AuthController.sendPasswordRecoveryCode);
+fastify.post('/auth/verify-recovery-code', AuthController.verifyPasswordRecoveryCode);
+fastify.post('/auth/reset-password', AuthController.resetPassword);
 
   // Mails
   fastify.post('/auth/mail/email', useValidates(true), AuthController.sendMailChangeEmail);

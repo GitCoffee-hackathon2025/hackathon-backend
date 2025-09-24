@@ -107,8 +107,28 @@ class UserService {
 
     await mailService.sendMail(type, { userId, email: user.email });
   }
+   public async checkEmailExists(email: string): Promise<boolean> {
+    const user = await userRepository.findByEmail(email);
+    return !!user;
+  }
+    public async resetPassword(email: string, newPassword: string): Promise<void> {
+    //UserValidations.validEmail(email);
+    UserValidations.validPassword(newPassword);
 
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      // Por segurança, não revelar que o email não existe
+      throw new FormatError(404, 'Operação não pode ser concluída');
+    }
 
+    // Verificar se o usuário está verificado
+
+    const hashPassword = await BcryptHashService.hash(newPassword);
+    await userRepository.update(user.id_user, { password: hashPassword });
+
+    // Limpar sessões/tokens existentes para segurança
+    await authService.deleteAll(user.id_user);
+  }
   public async update(
     userId: number,
     dataUser: PartialUserRegisterValues,
