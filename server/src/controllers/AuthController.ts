@@ -60,7 +60,147 @@ public static async login(request: FastifyRequest<{ Body: RequestBody }>, reply:
     }
   }
 
+public static async verifyPasswordRecoveryCode(
+    request: FastifyRequest<{ Body: RequestBody }>,
+    reply: FastifyReply
+  ) {
+    let aes: any; // Declarar aes fora do try para ter escopo no catch
+    
+    try {
+      console.log('🔴 [DEBUG] === VERIFICAÇÃO DE CÓDIGO DE RECUPERAÇÃO ===');
+      
+      const { decoded, aes: aesKey } = await CryptoManager.decode(request.body);
+      aes = aesKey; // Atribuir à variável externa
+      
+      console.log('🔴 [DEBUG] Dados decodificados:', decoded);
 
+      // Verificar estrutura dos dados - conforme o frontend envia
+      if (!decoded.data.data || typeof decoded.data !== 'object') {
+        throw new FormatError(400, 'Dados inválidos');
+      }
+
+      const { email, code } = decoded.data.data as { email: string; code: string };
+      
+      console.log('🔴 [DEBUG] Email:', email);
+      console.log('🔴 [DEBUG] Código:', code);
+
+      if (!email || !code) {
+        throw new FormatError(400, 'E-mail ou código não informado');
+      }
+
+      // Verificar código
+      await mailService.verifyPasswordRecoveryCode(email, String(code));
+      
+      // Resposta no formato que o frontend espera
+      const responseData = {
+        success: true,
+        message: 'Código verificado com sucesso',
+        verified: true
+      };
+
+      const encodedResponse = await CryptoManager.encode(responseData, aes);
+      return reply.status(200).send(encodedResponse);
+
+    } catch (error) {
+      console.log('❌ [DEBUG] Erro:', error);
+      
+      // Resposta de erro no formato esperado pelo frontend
+      if (error instanceof FormatError) {
+        const errorResponse = {
+          success: false,
+          message: error.message || 'Erro na verificação',
+          verified: false
+        };
+        
+        try {
+          // Usar aes se estiver disponível
+          if (aes) {
+            const encodedError = await CryptoManager.encode(errorResponse, aes);
+            return reply.status(error.status).send(encodedError);
+          } else {
+            return reply.status(error.status).send(errorResponse);
+          }
+        } catch (encodeError) {
+          return reply.status(500).send({ 
+            success: false, 
+            message: 'Erro interno no servidor' 
+          });
+        }
+      }
+      
+      // Erro genérico
+      const errorResponse = {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erro desconhecido',
+        verified: false
+      };
+      
+      try {
+        if (aes) {
+          const encodedError = await CryptoManager.encode(errorResponse, aes);
+          return reply.status(500).send(encodedError);
+        } else {
+          return reply.status(500).send(errorResponse);
+        }
+      } catch (encodeError) {
+        return reply.status(500).send({ 
+          success: false, 
+          message: 'Erro interno no servidor' 
+        });
+      }
+    }
+  }
+  public static async resetPassword(
+  request: FastifyRequest<{ Body: RequestBody }>, 
+  reply: FastifyReply
+) {
+  let aes; // Declarar fora do try para ter acesso no catch
+
+  try {
+
+    const { decoded, aes: decodedAes } = await CryptoManager.decode(request.body);
+    aes = decodedAes; // Armazenar para usar no catch
+    console.log('Decoded data for password reset:', decoded.data.data);
+    const { email, newPassword, code } = decoded.data.data as { 
+      email: string; 
+      newPassword: string;
+      code?: string;
+    };
+    console.log('🔴 [DEBUG] Email:', email);
+    console.log('🔴 [DEBUG] New Password:', newPassword);
+    // Resetar a senha do usuário
+    await userService.resetPassword(email, newPassword);
+
+    return reply.status(200).send(
+      await CryptoManager.encode({
+        success: true,
+        message: 'Senha alterada com sucesso'
+      }, aes)
+    );
+
+  } catch (error) {
+    // Se temos a chave AES, criar resposta criptografada
+    if (aes) {
+      try {
+        const errorResponse = {
+          success: false,
+          message: error instanceof Error ? error.message : 'Erro desconhecido',
+          ...(error && typeof error === 'object' && 'inputErro' in error ? { inputErro: (error as any).inputErro } : {})
+        };
+
+        return reply.status((typeof error === 'object' && error !== null && 'status' in error ? (error as any).status : 500)).send(
+          await CryptoManager.encode(errorResponse, aes)
+        );
+      } catch (encodeError) {
+        // Se falhar na codificação, usa SendError padrão
+        return SendError(error, reply);
+      }
+    }
+
+    // Se não temos AES, usa SendError padrão
+    return SendError(error, reply);
+  }
+}
   public static async verifyRegistrationCode(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {
     try {
       console.log('Verifying registration code...');
@@ -98,6 +238,32 @@ public static async login(request: FastifyRequest<{ Body: RequestBody }>, reply:
       return SendError(error, reply);
     }
   }
+  
+public static async sendPasswordRecoveryCode(
+  request: FastifyRequest<{ Body: RequestBody }>, 
+  reply: FastifyReply
+) {
+  try {
+    console.log(request.body)
+    const { decoded } = await CryptoManager.decode(request.body);
+    console.log("DECODE RECUPERAR ", decoded)
+     const email = decoded.data?.data?.email;
+    console.log("Email extraído:", email)
+    
+    console.log(email)
+    if (!email) throw new FormatError(400, 'E-mail não informado');
+
+    // Enviar código para o email (similar ao registro)
+    await mailService.sendPasswordRecoveryCode(email);
+
+    return reply.status(200).send({
+      success: true,
+      message: 'Código de recuperação enviado para o e-mail',
+    });
+  } catch (error) {
+    return SendError(error, reply);
+  }
+}
 
 
 public static async recover(request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply) {

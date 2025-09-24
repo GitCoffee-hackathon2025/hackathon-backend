@@ -38,13 +38,15 @@ class UserValidations {
   }
 
 
-  public static validPassword(password: string) {
-    const errorOfPassword = regexPassword(password);
-    if (errorOfPassword)
-      throw new FormatError(400, errorOfPassword, {
-        inputErro: ['PASSWORD'],
-      });
+public static validPassword(password: string) {
+  const errorOfPassword = regexPassword(password);
+  if (errorOfPassword) {
+    throw new FormatError(400, 'VALIDATION_ERROR', {
+      message: errorOfPassword,  // ✅ Mensagem dentro de parameters
+      inputErro: ['PASSWORD'],
+    });
   }
+}
 
 
   public static comparePasswords(password: string, confirm: string) {
